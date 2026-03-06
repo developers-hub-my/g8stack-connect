@@ -23,8 +23,6 @@ class Manage extends Component
     // Form fields
     public string $name = '';
 
-    public string $slug = '';
-
     public ?int $dataSourceId = null;
 
     public string $status = 'pending';
@@ -57,7 +55,6 @@ class Manage extends Component
     public function fillFromSpec(): void
     {
         $this->name = $this->apiSpec->name;
-        $this->slug = $this->apiSpec->slug ?? '';
         $this->dataSourceId = $this->apiSpec->data_source_id;
         $this->status = $this->apiSpec->status->value;
 
@@ -145,7 +142,6 @@ class Manage extends Component
     {
         $validated = $this->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255',
             'dataSourceId' => 'required|exists:data_sources,id',
             'status' => 'required|in:'.implode(',', array_column(SpecStatus::cases(), 'value')),
             'authEnabled' => 'boolean',
@@ -171,7 +167,6 @@ class Manage extends Component
         if ($this->isEditing) {
             $this->apiSpec->update([
                 'name' => $this->name,
-                'slug' => $this->slug ?: null,
                 'status' => $this->status,
                 'data_source_id' => $this->dataSourceId,
                 'configuration' => $configuration,
@@ -181,7 +176,6 @@ class Manage extends Component
             $this->apiSpec = ApiSpec::create([
                 'user_id' => auth()->id(),
                 'name' => $this->name,
-                'slug' => $this->slug ?: null,
                 'data_source_id' => $this->dataSourceId,
                 'wizard_mode' => 'guided',
                 'status' => $this->status,
