@@ -138,7 +138,7 @@ class GuidedConfigWizard extends Component
             );
         }
 
-        $this->dispatch('toast', type: 'success', message: 'Spec configuration saved and new version generated.', duration: 3000);
+        $this->alert('Success', 'Spec configuration saved and new version generated.');
     }
 
     public function render(): \Illuminate\View\View
