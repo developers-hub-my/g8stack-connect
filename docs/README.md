@@ -40,6 +40,13 @@ Getting your application to production:
 
 - [Deployment Guide](04-deployment/01-deployment.md) - Production deployment process
 
+### Roadmap
+
+Implementation phases and planning:
+
+- [Implementation Roadmap](05-roadmap/01-implementation-roadmap.md) - Phase-by-phase breakdown with timeline
+- [Decision Log](05-roadmap/02-decision-log.md) - Key architectural and product decisions
+
 ## Documentation Structure
 
 This documentation follows a progressive disclosure approach:
@@ -48,6 +55,7 @@ This documentation follows a progressive disclosure approach:
 2. **02-development/** - Day-to-day development workflows
 3. **03-architecture/** - Code standards and patterns
 4. **04-deployment/** - Production deployment
+5. **05-roadmap/** - Implementation phases, timeline, and decisions
 
 Each section builds upon previous knowledge, with clear cross-references where topics intersect.
 
