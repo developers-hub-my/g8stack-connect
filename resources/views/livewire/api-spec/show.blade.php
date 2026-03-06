@@ -10,6 +10,9 @@
             </p>
         </div>
         <div class="flex gap-2">
+            <flux:button variant="primary" size="sm" :href="route('api-specs.edit', ['uuid' => $apiSpec->uuid])" wire:navigate icon="pencil">
+                Edit
+            </flux:button>
             @if($apiSpec->wizard_mode->value === 'guided')
                 <flux:button variant="ghost" :href="route('api-specs.configure', ['uuid' => $apiSpec->uuid])" wire:navigate icon="settings">
                     Configure
