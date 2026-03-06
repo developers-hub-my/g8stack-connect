@@ -20,6 +20,7 @@ Key architectural and product decisions for G8Connect, with rationale documented
 | 12 | Combined spec generation across all tables | Saving config for one table regenerates the full OpenAPI spec for ALL tables; prevents partial spec output | v0.2 |
 | 13 | Scalar API Reference for spec rendering | CDN-based Scalar viewer in standalone page, embedded via iframe to avoid Livewire/Alpine conflicts | v0.2 |
 | 14 | No Flux Pro features | Flux UI tabs (`flux:tab.group`) are Pro-only; use Alpine.js x-data/x-show tabs with URL deep linking instead | v0.2 |
+| 15 | API key management handled by gateway | Key generation/revocation is Kong's responsibility, not G8Connect's; G8Connect generates specs, gateway handles runtime auth | v0.2.2 |
 
 ## Architecture Decision Records
 

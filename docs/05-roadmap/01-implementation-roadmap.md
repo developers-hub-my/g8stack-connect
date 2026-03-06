@@ -12,7 +12,7 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 | v0.1 | Foundation | Auth + DB connections + Simple Mode | Internal / Dev | Done |
 | v0.2 | Guided Mode | Field selection, methods, filters, versioning | Beta | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
-| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Near-complete (1 item left) |
+| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Done |
 | v0.3 | File Sources | CSV, JSON, Excel | Beta | Planned |
 | v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
 | v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
@@ -182,11 +182,11 @@ database/migrations/2026_03_06_100006_add_slug_to_api_specs_table.php
 - [x] Only configured HTTP methods allowed per spec
 - [x] Field display name mapping applied in responses
 
-## v0.2.2 — Runtime Hardening (17/18 exit criteria done)
+## v0.2.2 — Runtime Hardening ✅
 
 **Goal**: Make the dynamic API runtime production-ready — input validation, multi-table grouped specs, API security, and custom response headers.
 
-**Status**: Near-complete — only Key Management UI remaining.
+**Status**: Complete (2026-03-06). Key management UI skipped — handled by Kong API Gateway.
 
 ### Scope
 
@@ -393,7 +393,7 @@ database/migrations/xxxx_create_api_spec_tables_table.php
 - [x] Custom headers appear in all API responses
 - [x] Security headers (`X-Content-Type-Options`, `X-Frame-Options`) always present
 - [x] Request logging captures method, path, key, IP, status, latency
-- [ ] Key management UI allows generate, revoke, regenerate
+- [x] ~~Key management UI~~ — skipped, handled by API gateway (Kong)
 
 ### What's NOT in v0.2.2
 
@@ -576,7 +576,7 @@ stateDiagram-v2
 graph LR
     v01["v0.1 Foundation ✅"] --> v02["v0.2 Guided Mode ✅"]
     v02 --> v021["v0.2.1 Dynamic Runtime ✅"]
-    v021 --> v022["v0.2.2 Runtime Hardening ⏳"]
+    v021 --> v022["v0.2.2 Runtime Hardening ✅"]
     v022 --> v03["v0.3 File Sources"]
     v022 --> v04["v0.4 Advanced SQL"]
     v04 --> v05["v0.5 G8Stack Push"]
@@ -592,20 +592,11 @@ graph LR
 | v0.3 | CSV, JSON, Excel (.xlsx) |
 | Post-v1.0 | MongoDB, Redis, XML, Parquet, REST/SOAP, S3/MinIO, Google Sheets, SFTP |
 
-## What's Next — Finish v0.2.2, Then v0.3
+## What's Next — v0.3 File Sources
 
-### v0.2.2 Remaining
+v0.2.2 is complete. Next phase: **v0.3 File Sources**.
 
-Only **1 item** left to complete v0.2.2:
-
-1. **Key Management UI** — Livewire component to generate, revoke, regenerate API keys per spec
-   - `ApiSpecKey` model exists, `ApiKeyAuthentication` middleware works
-   - Need: `app/Livewire/ApiSpec/KeyManagement.php` + blade view
-   - Integrate into API Spec show page (new tab or section)
-
-### v0.3 — File Sources (next phase)
-
-Priority order:
+### Implementation Order
 
 ```
 Step 1:  CsvConnector — parse headers, infer types, preview rows
