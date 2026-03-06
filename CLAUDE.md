@@ -75,11 +75,12 @@ complexity is abstracted per user type.
 
 | Phase | Name | Key Deliverable | Status |
 |---|---|---|---|
-| v0.1 | Foundation | Auth + DB connectors + Simple Mode (local drafts only) | Planned |
-| v0.2 | Guided Mode | Field selection, methods, filters, draft versioning | Planned |
-| v0.3 | File Sources | CSV, JSON, Excel → read-only drafts | Planned |
-| v0.4 | Advanced Mode | SELECT SQL → named GET endpoint drafts | Planned |
-| v0.5 | G8Stack Push | Draft submission, webhook, status tracking | Planned |
+| v0.1 | Foundation | Auth + DB connectors + Simple Mode (local specs only) | Done |
+| v0.2 | Guided Mode | Field selection, methods, filters, spec versioning | Done |
+| v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Done |
+| v0.3 | File Sources | CSV, JSON, Excel → read-only specs | Planned |
+| v0.4 | Advanced Mode | SELECT SQL → named GET endpoint specs | Planned |
+| v0.5 | G8Stack Push | Spec submission, webhook, status tracking | Planned |
 | v1.0 | GA Release | Hardening, audit UI, multi-org, full docs | Planned |
 
 > **Rule**: Never build ahead of phase. If a feature belongs to v0.3, don't implement it in v0.1

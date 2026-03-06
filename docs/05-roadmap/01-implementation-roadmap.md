@@ -7,14 +7,15 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 
 ## Phase Summary
 
-| Phase | Name | Scope | Target |
-|---|---|---|---|
-| v0.1 | Foundation | Auth + DB connections + Simple Mode | Internal / Dev |
-| v0.2 | Guided Mode | Field selection, methods, filters | Beta |
-| v0.3 | File Sources | CSV, JSON, Excel | Beta |
-| v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep |
-| v0.5 | G8Stack Push | Draft submission + status tracking | GA |
-| v1.0 | GA Release | Polish, audit, PII hardening, docs | Public |
+| Phase | Name | Scope | Target | Status |
+|---|---|---|---|---|
+| v0.1 | Foundation | Auth + DB connections + Simple Mode | Internal / Dev | Done |
+| v0.2 | Guided Mode | Field selection, methods, filters, versioning | Beta | Done |
+| v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
+| v0.3 | File Sources | CSV, JSON, Excel | Beta | Planned |
+| v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
+| v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
+| v1.0 | GA Release | Polish, audit, PII hardening, docs | Public | Planned |
 
 ## Timeline
 
@@ -23,34 +24,37 @@ gantt
   title G8Connect Implementation Roadmap
   dateFormat YYYY-MM-DD
   section Foundation
-    v0.1 Foundation         :2026-03-10, 2026-04-15
+    v0.1 Foundation         :done, 2026-03-01, 2026-03-06
+    v0.2 Guided Mode        :done, 2026-03-06, 2026-03-06
+    v0.2.1 Dynamic Runtime  :done, 2026-03-06, 2026-03-06
   section Core Modes
-    v0.2 Guided Mode        :2026-04-16, 2026-05-15
-    v0.3 File Sources       :2026-05-16, 2026-06-15
-    v0.4 Advanced SQL Mode  :2026-06-16, 2026-07-15
+    v0.3 File Sources       :2026-03-10, 2026-04-15
+    v0.4 Advanced SQL Mode  :2026-04-16, 2026-05-15
   section Integration
-    v0.5 G8Stack Push       :2026-07-16, 2026-08-15
+    v0.5 G8Stack Push       :2026-05-16, 2026-06-15
   section Release
-    v1.0 GA Release         :2026-08-16, 2026-09-30
+    v1.0 GA Release         :2026-06-16, 2026-07-31
 ```
 
-## v0.1 — Foundation
+## v0.1 — Foundation ✅
 
-**Goal**: Connect to a database, introspect schema, expose all fields as a CRUD draft automatically. Simple Mode only.
+**Goal**: Connect to a database, introspect schema, expose all fields as a CRUD spec automatically. Simple Mode only.
+
+**Status**: Complete (2026-03-06)
 
 ### Scope
 
 - Project scaffolding (Laravel 12, Livewire, roles/permissions, Keycloak SSO skeleton)
-- `DataSource` model — store connection config (type, encrypted credentials)
+- `DataSource` model — store connection config (type, `encrypted:array` credentials)
 - Connectors: **PostgreSQL**, **MySQL**, **MSSQL**, **SQLite**
-- Introspection: read tables, columns, data types
+- Introspection: read tables, columns, data types (per-driver schema filtering)
 - Simple Mode wizard:
   - Step 1: Connect (type, credentials, validate)
   - Step 2: Introspect (list tables)
-  - Step 3: Pick table — auto-generate full CRUD draft (no config)
+  - Step 3: Pick table — auto-generate full CRUD spec (no config)
   - Step 4: PII column scan (flag, exclude by default)
   - Step 5: Review generated OpenAPI spec (read-only preview)
-- `ApiDraft` model — store generated spec, status (`pending`)
+- `ApiSpec` model — store generated spec, status (`pending`), slug for runtime
 - Basic RBAC: `superadmin`, `administrator`, `developer`, `viewer`
 - Audit log: every connect + introspect action recorded
 
@@ -61,35 +65,39 @@ app/Services/Connectors/PostgresConnector.php
 app/Services/Connectors/MySqlConnector.php
 app/Services/Connectors/MssqlConnector.php
 app/Services/Connectors/SqliteConnector.php
+app/Services/Connectors/ConnectorFactory.php
+app/Services/Connectors/AbstractDatabaseConnector.php
 app/Services/Introspectors/DatabaseIntrospector.php
-app/Services/PiiDetectionService.php
-app/Services/DraftGenerator/CrudDraftGenerator.php
+app/Services/PiiDetection/PiiDetectionService.php
+app/Services/SpecGenerator/CrudSpecGenerator.php
+app/Services/SpecGenerator/OpenApiSchemaMapper.php
 app/Livewire/DataSource/ConnectWizard.php
-app/Livewire/Draft/DraftReview.php
+app/Livewire/DataSource/Index.php
+app/Livewire/DataSource/Show.php
+app/Livewire/ApiSpec/Index.php
+app/Livewire/ApiSpec/Show.php
 app/Models/DataSource.php
-app/Models/ApiDraft.php
+app/Models/DataSourceSchema.php
+app/Models/ApiSpec.php
 app/Models/ConnectionAudit.php
+app/Policies/DataSourcePolicy.php
+app/Policies/ApiSpecPolicy.php
 ```
 
 ### Exit Criteria
 
-- [ ] All four DB connectors connect and introspect successfully
-- [ ] Simple Mode wizard generates valid OpenAPI 3.1 spec
-- [ ] PII columns auto-flagged and excluded from draft
-- [ ] Audit log records every connection attempt
-- [ ] Credentials encrypted at rest, never logged
-- [ ] RBAC enforced on all data source operations
+- [x] All four DB connectors connect and introspect successfully
+- [x] Simple Mode wizard generates valid OpenAPI 3.1 spec
+- [x] PII columns auto-flagged and excluded from spec
+- [x] Audit log records every connection attempt
+- [x] Credentials encrypted at rest (`encrypted:array` cast), never logged
+- [x] RBAC enforced on all data source operations
 
-### What's NOT in v0.1
-
-- No G8Stack push (drafts stay local)
-- No field selection (all fields auto-included, minus PII)
-- No file sources
-- No SQL mode
-
-## v0.2 — Guided Mode
+## v0.2 — Guided Mode ✅
 
 **Goal**: Give developers control — pick tables, choose which fields to expose, select HTTP methods, add basic filters.
+
+**Status**: Complete (2026-03-06)
 
 ### Scope
 
@@ -97,38 +105,68 @@ app/Models/ConnectionAudit.php
 - Field configurator:
   - Toggle expose/exclude per column
   - Rename field (API name vs DB column name)
-  - Mark as required / optional / read-only
+  - Mark as required / optional / read-only / filterable / sortable
 - Method selector: choose which of `GET list`, `GET single`, `POST`, `PUT`, `PATCH`, `DELETE` to generate
 - Basic filter config: allow filtering by selected columns (query params)
 - Pagination config: page size, max limit
-- `DraftField` model — store per-field config per draft
+- `ApiSpecField` model — store per-field config per spec
 - Preview: show 5-row sample based on field selection
-- Draft versioning — regenerate draft if config changes (new version, not overwrite)
+- Spec versioning — regenerate spec if config changes (new version, not overwrite)
 
 ### Deliverables
 
 ```text
-app/Services/DraftGenerator/GuidedDraftGenerator.php
+app/Services/SpecGenerator/GuidedSpecGenerator.php
+app/Services/SpecVersioning/SpecVersioningService.php
 app/Livewire/DataSource/GuidedConfigWizard.php
-app/Livewire/Draft/FieldConfigurator.php
-app/Models/DraftField.php
-app/Models/DraftVersion.php
+app/Livewire/ApiSpec/VersionHistory.php
+app/Models/ApiSpecField.php
+app/Models/ApiSpecVersion.php
+app/Settings/ConnectionSettings.php
+app/Settings/G8StackSettings.php
 ```
 
 ### Exit Criteria
 
-- [ ] Guided Mode wizard allows field-level configuration
-- [ ] Method selection generates correct OpenAPI operations
-- [ ] Filter and pagination config reflected in spec
-- [ ] Draft versioning creates new version on regenerate
-- [ ] Preview limited to 5 rows maximum
+- [x] Guided Mode wizard allows field-level configuration
+- [x] Method selection generates correct OpenAPI operations
+- [x] Filter and pagination config reflected in spec
+- [x] Spec versioning creates new version on regenerate
+- [x] Preview limited to 5 rows maximum
 
-### What's NOT in v0.2
+## v0.2.1 — Dynamic API Runtime ✅
 
-- No G8Stack push yet
-- No file sources
-- No SQL mode
-- No relationship traversal (foreign keys to nested resources)
+**Goal**: Serve deployed specs as live CRUD endpoints, turning G8Connect into an upstream service.
+
+**Status**: Complete (2026-03-06)
+
+### Scope
+
+- Dynamic catch-all route under `/api/connect/{slug}` serving CRUD from deployed specs
+- Header-based API versioning via `cleaniquecoders/laravel-api-version` (no version in URI)
+- Runtime query builder: list (paginated, filterable, sortable), find, create, update, delete
+- Response transformer: column-to-display-name mapping, input field filtering
+- Auto-slug generation on `ApiSpec` model from name
+- Method enforcement: only methods configured in spec are allowed
+
+### Deliverables
+
+```text
+app/Http/Controllers/Api/V1/DynamicApiController.php
+app/Services/ApiRuntime/ApiQueryService.php
+app/Services/ApiRuntime/ApiResponseTransformer.php
+routes/api.php
+config/api-version.php
+database/migrations/2026_03_06_100006_add_slug_to_api_specs_table.php
+```
+
+### Exit Criteria
+
+- [x] Deployed specs serve live CRUD endpoints at `/api/connect/{slug}`
+- [x] PII columns auto-excluded from runtime responses
+- [x] Filtering, sorting, pagination work via query params
+- [x] Only configured HTTP methods allowed per spec
+- [x] Field display name mapping applied in responses
 
 ## v0.3 — File Sources
 
@@ -141,9 +179,9 @@ app/Models/DraftVersion.php
 - File introspection:
   - CSV/Excel: detect headers, infer column types
   - JSON: detect top-level array structure, infer field types
-- Auto-generate read-only draft (GET list + GET single only — no writes from files)
+- Auto-generate read-only spec (GET list + GET single only — no writes from files)
 - Row limit enforced at draft level (configurable via Settings)
-- File-sourced drafts labelled clearly — approvers in G8Stack can see source type
+- File-sourced specs labelled clearly — approvers in G8Stack can see source type
 - Temp file cleanup after introspection (don't persist raw uploads long-term)
 
 ### Deliverables
@@ -215,15 +253,15 @@ app/Livewire/DataSource/SqlQueryWizard.php
 
 ## v0.5 — G8Stack Push
 
-**Goal**: Submit drafts to G8Stack governance workflow. Track approval status.
+**Goal**: Submit specs to G8Stack governance workflow. Track approval status.
 
 ### Scope
 
-- `G8StackService` — push OpenAPI draft via G8Stack API
+- `G8StackService` — push OpenAPI spec via G8Stack API
 - Push is **queued** (Laravel job) — never synchronous in request cycle
-- Draft status tracking: `pending` to `pushed` to `approved` / `rejected` to `deployed`
+- Spec status tracking: `pending` → `pushed` → `approved` / `rejected` → `deployed`
 - Webhook receiver: G8Stack posts back status updates
-- UI: draft list shows current status, last pushed at, approved/rejected by
+- UI: spec list shows current status, last pushed at, approved/rejected by
 - Re-push on rejection: developer can revise config and resubmit
 - G8Stack connection settings UI (Admin > Settings > G8Stack):
   - Endpoint URL
@@ -234,31 +272,30 @@ app/Livewire/DataSource/SqlQueryWizard.php
 
 ```text
 app/Services/G8StackService.php
-app/Jobs/PushDraftToG8Stack.php
+app/Jobs/PushSpecToG8Stack.php
 app/Http/Controllers/Webhook/G8StackWebhookController.php
-app/Livewire/Draft/DraftList.php
 app/Settings/G8StackSettings.php
 ```
 
-### Draft Status Flow
+### Spec Status Flow
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: Draft generated
+    [*] --> pending: Spec generated
     pending --> pushed: Push to G8Stack
     pushed --> approved: G8Stack approves
     pushed --> rejected: G8Stack rejects
     rejected --> pending: Revise and regenerate
-    approved --> deployed: Kong deployment
+    approved --> deployed: Kong deployment (+ runtime endpoint live)
     deployed --> [*]
 ```
 
 ### Exit Criteria
 
-- [ ] Drafts push to G8Stack via queued job
+- [ ] Specs push to G8Stack via queued job
 - [ ] Failed jobs retry 3 times with exponential backoff
-- [ ] Webhook updates draft status in real-time
-- [ ] UI shows current status for all drafts
+- [ ] Webhook updates spec status in real-time
+- [ ] UI shows current status for all specs
 - [ ] Push failures surface clearly — never silent fail
 - [ ] Admin notified on final retry failure
 
@@ -271,10 +308,11 @@ stateDiagram-v2
 - Full audit trail UI (who connected, introspected, generated, pushed)
 - PII detection improvements — configurable patterns per organisation
 - Connection health check — periodic ping to verify data source still reachable
-- Draft expiry — drafts older than X days prompt re-validation before push
+- Spec expiry — specs older than X days prompt re-validation before push
 - Multi-org support (basic) — data sources scoped to team/organisation
 - Read-only connection enforcement validator — warn if account has write grants
-- Rate limiting on introspection and preview endpoints
+- Rate limiting on dynamic runtime endpoints and introspection/preview
+- Authentication for dynamic API endpoints (API keys / Sanctum)
 - Full test coverage (feature + unit, Pest)
 - Docs: user guide, admin guide, G8Stack integration guide
 - Demo seed data — realistic but fake data sources for prospects
@@ -301,7 +339,8 @@ stateDiagram-v2
 
 ```mermaid
 graph LR
-    v01["v0.1 Foundation"] --> v02["v0.2 Guided Mode"]
+    v01["v0.1 Foundation ✅"] --> v02["v0.2 Guided Mode ✅"]
+    v02 --> v021["v0.2.1 Dynamic Runtime ✅"]
     v01 --> v03["v0.3 File Sources"]
     v01 --> v04["v0.4 Advanced SQL"]
     v02 --> v03
@@ -319,7 +358,30 @@ graph LR
 | v0.3 | CSV, JSON, Excel (.xlsx) |
 | Post-v1.0 | MongoDB, Redis, XML, Parquet, REST/SOAP, S3/MinIO, Google Sheets, SFTP |
 
-## Next Steps
+## What's Next — v0.3 File Sources
+
+The next phase adds file-based data sources (CSV, JSON, Excel). Key work:
+
+1. **File Connectors** — `CsvConnector`, `JsonConnector`, `ExcelConnector` implementing `DataSourceConnector`
+2. **File Introspector** — detect headers, infer column types from content
+3. **File Upload Wizard** — Livewire component with Spatie MediaLibrary integration
+4. **Read-only spec generation** — GET endpoints only (no writes from file sources)
+5. **Temp file cleanup** — don't persist raw uploads long-term
+
+### Recommended Approach
+
+- Extend `DataSourceType` enum with `CSV`, `JSON`, `EXCEL` cases
+- Extend `ConnectorFactory` to resolve file connectors
+- File connectors load data into a temp SQLite DB for consistent query interface
+- Reuse existing `CrudSpecGenerator` / `GuidedSpecGenerator` with method restriction (GET only)
+
+### Also Consider (before v0.3)
+
+- **Dynamic runtime auth** — API key or Sanctum token for `/api/connect/` endpoints
+- **Runtime tests** — integration tests for `DynamicApiController`, `ApiQueryService`
+- **Rate limiting** — throttle dynamic API endpoints
+
+## References
 
 - [Decision Log](02-decision-log.md)
 - [Architecture Overview](../03-architecture/README.md)
