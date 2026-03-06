@@ -7,10 +7,10 @@
     </div>
 
     <form wire:submit="save">
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
 
-            {{-- LEFT: Resources (2/3 width) --}}
-            <div class="lg:col-span-2 space-y-6">
+            {{-- LEFT: Resources (3/4 width) --}}
+            <div class="lg:col-span-3 space-y-6">
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 space-y-4">
                     <div class="flex items-center justify-between">
                         <flux:heading size="lg">Resources</flux:heading>

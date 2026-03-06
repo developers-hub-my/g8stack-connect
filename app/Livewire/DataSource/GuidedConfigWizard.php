@@ -7,6 +7,7 @@ namespace App\Livewire\DataSource;
 use App\Concerns\InteractsWithLivewireAlert;
 use App\Models\ApiSpec;
 use App\Models\ApiSpecField;
+use App\Models\ApiSpecTable;
 use App\Models\DataSourceSchema;
 use App\Services\PiiDetection\PiiDetectionService;
 use App\Services\SpecGenerator\GuidedSpecGenerator;
@@ -18,6 +19,8 @@ class GuidedConfigWizard extends Component
     use InteractsWithLivewireAlert;
 
     public ApiSpec $apiSpec;
+
+    public ?string $selectedTableId = null;
 
     public array $fields = [];
 
@@ -32,13 +35,38 @@ class GuidedConfigWizard extends Component
         $this->apiSpec = ApiSpec::where('uuid', $specUuid)->firstOrFail();
         $this->authorize('update', $this->apiSpec);
 
-        $this->loadFields();
+        $tables = $this->apiSpec->tables()->get();
+        if ($tables->isNotEmpty()) {
+            $this->selectedTableId = (string) $tables->first()->id;
+        }
+
+        $this->loadFieldsForTable();
     }
 
-    protected function loadFields(): void
+    public function updatedSelectedTableId(): void
     {
-        if ($this->apiSpec->fields->isNotEmpty()) {
-            $this->fields = $this->apiSpec->fields->map(fn (ApiSpecField $f) => [
+        $this->loadFieldsForTable();
+    }
+
+    protected function loadFieldsForTable(): void
+    {
+        if (! $this->selectedTableId) {
+            $this->fields = [];
+
+            return;
+        }
+
+        $table = ApiSpecTable::find($this->selectedTableId);
+        if (! $table) {
+            $this->fields = [];
+
+            return;
+        }
+
+        $existingFields = $table->fields()->get();
+
+        if ($existingFields->isNotEmpty()) {
+            $this->fields = $existingFields->map(fn (ApiSpecField $f) => [
                 'column_name' => $f->column_name,
                 'display_name' => $f->display_name ?? $f->column_name,
                 'data_type' => $f->data_type,
@@ -50,28 +78,37 @@ class GuidedConfigWizard extends Component
                 'sort_order' => $f->sort_order,
             ])->all();
         } else {
-            $schema = DataSourceSchema::where('data_source_id', $this->apiSpec->data_source_id)
-                ->whereIn('table_name', $this->apiSpec->selected_tables ?? [])
-                ->first();
-
-            if ($schema) {
-                $piiScanner = new PiiDetectionService;
-                $columnNames = collect($schema->columns)->pluck('name')->all();
-                $piiResult = $piiScanner->scan($columnNames);
-
-                $this->fields = collect($schema->columns)->map(fn ($col, $i) => [
-                    'column_name' => $col['name'],
-                    'display_name' => $col['name'],
-                    'data_type' => $col['type'] ?? 'varchar',
-                    'is_exposed' => ! in_array($col['name'], $piiResult->flagged),
-                    'is_pii' => in_array($col['name'], $piiResult->flagged),
-                    'is_required' => false,
-                    'is_filterable' => false,
-                    'is_sortable' => false,
-                    'sort_order' => $i,
-                ])->all();
-            }
+            $this->loadFieldsFromSchema($table->table_name);
         }
+    }
+
+    protected function loadFieldsFromSchema(string $tableName): void
+    {
+        $schema = DataSourceSchema::where('data_source_id', $this->apiSpec->data_source_id)
+            ->where('table_name', $tableName)
+            ->first();
+
+        if (! $schema) {
+            $this->fields = [];
+
+            return;
+        }
+
+        $piiScanner = new PiiDetectionService;
+        $columnNames = collect($schema->columns)->pluck('name')->all();
+        $piiResult = $piiScanner->scan($columnNames);
+
+        $this->fields = collect($schema->columns)->map(fn ($col, $i) => [
+            'column_name' => $col['name'],
+            'display_name' => $col['name'],
+            'data_type' => $col['type'] ?? 'varchar',
+            'is_exposed' => ! in_array($col['name'], $piiResult->flagged),
+            'is_pii' => in_array($col['name'], $piiResult->flagged),
+            'is_required' => false,
+            'is_filterable' => false,
+            'is_sortable' => false,
+            'sort_order' => $i,
+        ])->all();
     }
 
     public function toggleField(int $index, string $property): void
@@ -94,11 +131,22 @@ class GuidedConfigWizard extends Component
     {
         $this->authorize('update', $this->apiSpec);
 
-        $this->apiSpec->fields()->delete();
+        if (! $this->selectedTableId) {
+            return;
+        }
+
+        $table = ApiSpecTable::find($this->selectedTableId);
+        if (! $table) {
+            return;
+        }
+
+        // Delete existing fields for this table and recreate
+        $table->fields()->delete();
 
         foreach ($this->fields as $field) {
             ApiSpecField::create([
                 'api_spec_id' => $this->apiSpec->id,
+                'api_spec_table_id' => $table->id,
                 'column_name' => $field['column_name'],
                 'display_name' => $field['display_name'],
                 'data_type' => $field['data_type'],
@@ -112,7 +160,7 @@ class GuidedConfigWizard extends Component
         }
 
         $schema = DataSourceSchema::where('data_source_id', $this->apiSpec->data_source_id)
-            ->whereIn('table_name', $this->apiSpec->selected_tables ?? [])
+            ->where('table_name', $table->table_name)
             ->first();
 
         if ($schema) {
@@ -129,20 +177,23 @@ class GuidedConfigWizard extends Component
                 $this->apiSpec,
                 $spec,
                 [
+                    'table' => $table->table_name,
                     'fields' => $this->fields,
                     'methods' => $this->methods,
                     'pagination' => $this->pagination,
                     'per_page' => $this->perPage,
                 ],
-                'Guided mode configuration updated.',
+                "Field configuration updated for {$table->resource_name}.",
             );
         }
 
-        $this->alert('Success', 'Spec configuration saved and new version generated.');
+        $this->alert('Success', "Configuration saved for {$table->resource_name}.");
     }
 
     public function render(): \Illuminate\View\View
     {
-        return view('livewire.data-source.guided-config-wizard');
+        return view('livewire.data-source.guided-config-wizard', [
+            'tables' => $this->apiSpec->tables()->get(),
+        ]);
     }
 }
