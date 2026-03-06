@@ -121,12 +121,18 @@ app/Policies/ApiSpecPolicy.php
 ```text
 app/Services/SpecGenerator/GuidedSpecGenerator.php
 app/Services/SpecVersioning/SpecVersioningService.php
+app/Services/SpecGenerator/GuidedSpecGenerator.php  (supports multi-table via generateForTables())
+app/Services/SpecVersioning/SpecVersioningService.php
 app/Livewire/DataSource/GuidedConfigWizard.php
+app/Livewire/ApiSpec/Manage.php           (create/edit with tabbed UI)
 app/Livewire/ApiSpec/VersionHistory.php
 app/Models/ApiSpecField.php
+app/Models/ApiSpecTable.php               (per-table operations, resource names)
 app/Models/ApiSpecVersion.php
 app/Settings/ConnectionSettings.php
 app/Settings/G8StackSettings.php
+resources/views/api-specs/spec-viewer.blade.php  (Scalar API Reference viewer)
+routes/web/api-specs.php                  (CRUD + preview + spec.json routes)
 ```
 
 ### Exit Criteria
@@ -136,6 +142,11 @@ app/Settings/G8StackSettings.php
 - [x] Filter and pagination config reflected in spec
 - [x] Spec versioning creates new version on regenerate
 - [x] Preview limited to 5 rows maximum
+- [x] Multi-table spec generation — combined OpenAPI spec across all tables
+- [x] Per-table operations (list, show, create, update, delete) on ApiSpecTable
+- [x] API Spec create/edit UI with tabbed layout (Basic Info, Configuration, Resources)
+- [x] Configure page with resource selector and per-table field configuration
+- [x] Scalar API Reference viewer for interactive spec preview
 
 ## v0.2.1 — Dynamic API Runtime ✅
 

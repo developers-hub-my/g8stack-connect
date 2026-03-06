@@ -137,6 +137,7 @@ The Base model provides:
 | `DataSourceSchema` | Introspected schema snapshot (tables, columns, types) | v0.1 |
 | `ApiSpec` | Generated OpenAPI spec (with slug for runtime endpoint) | v0.1 |
 | `ConnectionAudit` | Every connect/introspect/preview action logged | v0.1 |
+| `ApiSpecTable` | Per-table resource config (operations, resource_name, sort_order) | v0.2 |
 | `ApiSpecField` | Per-field config (exposed, excluded, renamed, PII-flagged) | v0.2 |
 | `ApiSpecVersion` | Versioned specs — regenerate creates new version, never overwrites | v0.2 |
 
@@ -206,6 +207,24 @@ DELETE /api/connect/{slug}/{id}  → delete
 > columns to domain-relevant field names (e.g. `usr_email_addr` → `email`). This applies to
 > response payloads, error messages, validation messages, and URL paths. Internal DB structure
 > should never leak through the API surface.
+
+### Spec Generation — Multi-Table
+
+`GuidedSpecGenerator::generateForTables()` produces a single combined OpenAPI spec across all
+tables in an API spec. Each table contributes its own paths and component schemas. Operations
+(list, show, create, update, delete) are configured **per-table** on `ApiSpecTable.operations`,
+not globally. The configure page saves the current table then regenerates the full combined spec.
+
+> **Gotcha:** Always generate the combined spec for ALL tables when saving configuration for any
+> single table. Otherwise the saved `openapi_spec` only contains the last-configured table.
+
+### OpenAPI Spec Viewer
+
+The show page renders specs using **Scalar API Reference** (CDN). Architecture:
+- `/api-specs/{uuid}/spec.json` — JSON endpoint serving the raw spec (auth-gated)
+- `/api-specs/{uuid}/preview` — standalone Scalar viewer page (minimal HTML, no sidebar)
+- Show page embeds the viewer via iframe to avoid Livewire/Alpine conflicts
+- Preview/JSON toggle + "Open" button for full-screen viewing in new tab
 
 ### G8Stack Integration
 
@@ -406,7 +425,12 @@ app/
 │   └── G8StackService.php     # Push specs to G8Stack (v0.5)
 support/                # Helper functions
 routes/web/             # Modular web routes
+routes/web/api-specs.php  # API Spec CRUD + preview + spec.json routes
 routes/api.php          # Dynamic API runtime routes (/api/connect/)
+resources/views/
+├── api-specs/          # Wrapper views (index, show, create, edit, configure, spec-viewer)
+├── livewire/api-spec/  # Livewire component views (index, show, manage)
+├── livewire/data-source/  # GuidedConfigWizard view
 stubs/                  # Custom Artisan stubs
 ```
 
@@ -445,6 +469,31 @@ class CsvConnector implements DataSourceConnector { ... }
 > **Gotcha:** Livewire 4 does not support the `rules()` method for dynamic validation.
 > Calling `$this->validate()` without rules throws `MissingRulesException`.
 > Always pass rules inline: `$this->validate($rules)`.
+
+### Flux UI Constraints
+
+> **Gotcha:** `flux:tab.group` / `flux:tabs` is **Flux Pro only** — not available in this project.
+> Use Alpine.js `x-data`/`x-show` for tabs instead. Include cursor-pointer, hover/active states,
+> and URL deep linking via `window.history.replaceState`.
+
+> **Gotcha:** `@json()` Blade directive inside HTML attributes causes parse errors due to
+> bracket conflicts. Use `{!! json_encode(...) !!}` instead when outputting JSON in attributes.
+
+### Page Header Pattern
+
+All pages follow this consistent header pattern:
+
+```blade
+<flux:breadcrumbs class="mb-6">...</flux:breadcrumbs>
+<div class="flex items-end justify-between">
+    <div>
+        <flux:heading size="xl" level="1">Title</flux:heading>
+        <flux:text class="mt-2">Description.</flux:text>
+    </div>
+    <div class="flex items-center gap-2">{{-- Action buttons --}}</div>
+</div>
+<flux:separator variant="subtle" class="my-6" />
+```
 
 ### Alerts and Confirmations
 
@@ -486,6 +535,8 @@ class ConnectDataSource extends Component
 - Remap table names to clean resource names and column names to domain-relevant field names
 - Auto-suggest clean names in Simple Mode (strip prefixes like `tbl_`, `tb_`, pluralise)
 - Default to read-only for dynamic API — write operations (C, U, D) must be explicitly opted-in per resource
+- Configure operations (list, show, create, update, delete) per-table on `ApiSpecTable`, not globally
+- Use Scalar API Reference (CDN) for OpenAPI spec rendering — embed via iframe in Livewire pages
 
 ### DON'T
 
@@ -530,6 +581,7 @@ class ConnectDataSource extends Component
 - **livewire/livewire**: Reactive components
 - **livewire/flux**: UI components
 - **mallardduck/blade-lucide-icons**: Icons via `@svg('lucide-icon-name')`
+- **@scalar/api-reference** (CDN): Interactive OpenAPI spec viewer
 
 ---
 

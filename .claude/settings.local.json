@@ -29,7 +29,8 @@
       "Bash(php:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:fluxui.dev)"
     ]
   }
 }

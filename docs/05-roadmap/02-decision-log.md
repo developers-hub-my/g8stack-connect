@@ -16,6 +16,10 @@ Key architectural and product decisions for G8Connect, with rationale documented
 | 8 | Draft versioning, not overwriting | Regenerating a draft creates a new version to preserve history and enable comparison | v0.2 |
 | 9 | Read-only DB connections enforced | Validated at connector level, not just application logic — defence in depth | v0.1+ |
 | 10 | Audit logs never include credentials | Even encrypted values excluded from audit trail — credential references only | v0.1+ |
+| 11 | Operations are per-table, not global | Each `ApiSpecTable` has its own `operations` (list, show, create, update, delete); allows fine-grained control per resource | v0.2.2 |
+| 12 | Combined spec generation across all tables | Saving config for one table regenerates the full OpenAPI spec for ALL tables; prevents partial spec output | v0.2 |
+| 13 | Scalar API Reference for spec rendering | CDN-based Scalar viewer in standalone page, embedded via iframe to avoid Livewire/Alpine conflicts | v0.2 |
+| 14 | No Flux Pro features | Flux UI tabs (`flux:tab.group`) are Pro-only; use Alpine.js x-data/x-show tabs with URL deep linking instead | v0.2 |
 
 ## Architecture Decision Records
 
