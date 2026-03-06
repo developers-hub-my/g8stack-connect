@@ -31,4 +31,23 @@ Route::middleware(['auth:sanctum', 'verified'])
             return view('api-specs.configure', compact('uuid'));
         })->name('configure');
 
+        Route::get('/{uuid}/preview', function (string $uuid) {
+            $apiSpec = \App\Models\ApiSpec::where('uuid', $uuid)->firstOrFail();
+
+            abort_unless(auth()->user()->can('view', $apiSpec), 403);
+
+            return view('api-specs.spec-viewer', compact('apiSpec'));
+        })->name('preview');
+
+        Route::get('/{uuid}/spec.json', function (string $uuid) {
+            $apiSpec = \App\Models\ApiSpec::where('uuid', $uuid)->firstOrFail();
+
+            abort_unless(auth()->user()->can('view', $apiSpec), 403);
+
+            return response()->json(
+                $apiSpec->openapi_spec ?? ['openapi' => '3.1.0', 'info' => ['title' => $apiSpec->name, 'version' => '0.0.0'], 'paths' => []],
+                headers: ['Content-Type' => 'application/json']
+            );
+        })->name('spec.json');
+
     });

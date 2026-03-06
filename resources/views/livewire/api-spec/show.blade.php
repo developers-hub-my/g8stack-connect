@@ -33,11 +33,40 @@
 
     {{-- OpenAPI Spec --}}
     @if($apiSpec->openapi_spec)
-        <div class="mb-8">
-            <flux:heading size="lg" class="mb-4">OpenAPI Specification</flux:heading>
-            <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 p-4 overflow-auto max-h-[600px]">
+        <div x-data="{ view: 'preview' }" class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <flux:heading size="lg">OpenAPI Specification</flux:heading>
+                <div class="flex gap-1">
+                    <flux:button size="sm" :variant="'ghost'" @click="view = 'preview'" ::class="view === 'preview' && '!bg-zinc-100 dark:!bg-zinc-700'">
+                        Preview
+                    </flux:button>
+                    <flux:button size="sm" :variant="'ghost'" @click="view = 'json'" ::class="view === 'json' && '!bg-zinc-100 dark:!bg-zinc-700'">
+                        JSON
+                    </flux:button>
+                    <flux:button size="sm" variant="ghost" :href="route('api-specs.preview', ['uuid' => $apiSpec->uuid])" target="_blank" icon="arrow-up-right">
+                        Open
+                    </flux:button>
+                </div>
+            </div>
+
+            {{-- Scalar API Reference (iframe) --}}
+            <div x-show="view === 'preview'" class="rounded-xl border border-zinc-200 dark:border-zinc-700/60 overflow-hidden">
+                <iframe
+                    src="{{ route('api-specs.preview', ['uuid' => $apiSpec->uuid]) }}"
+                    class="w-full border-0"
+                    style="height: 700px;"
+                    loading="lazy"
+                ></iframe>
+            </div>
+
+            {{-- Raw JSON --}}
+            <div x-show="view === 'json'" x-cloak class="rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-800 p-4 overflow-auto max-h-[600px]">
                 <pre class="text-xs text-zinc-700 dark:text-zinc-300"><code>{{ json_encode($apiSpec->openapi_spec, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</code></pre>
             </div>
+        </div>
+    @else
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/40 p-10 text-center mb-8">
+            <flux:text>No OpenAPI spec generated yet. Configure your resources and save to generate.</flux:text>
         </div>
     @endif
 
