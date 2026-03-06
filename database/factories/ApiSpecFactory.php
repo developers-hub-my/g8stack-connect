@@ -54,4 +54,11 @@ class ApiSpecFactory extends Factory
             'status' => SpecStatus::PUSHED,
         ]);
     }
+
+    public function deployed(): static
+    {
+        return $this->state(fn () => [
+            'status' => SpecStatus::DEPLOYED,
+        ]);
+    }
 }

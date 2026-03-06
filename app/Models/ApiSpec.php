@@ -10,6 +10,7 @@ use App\Models\Base as Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class ApiSpec extends Model
 {
@@ -20,6 +21,22 @@ class ApiSpec extends Model
     protected $hidden = [
         'id',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (ApiSpec $spec) {
+            if (empty($spec->slug) && ! empty($spec->name)) {
+                $spec->slug = Str::slug($spec->name);
+
+                $original = $spec->slug;
+                $counter = 1;
+                while (static::withTrashed()->where('slug', $spec->slug)->exists()) {
+                    $spec->slug = $original.'-'.$counter;
+                    $counter++;
+                }
+            }
+        });
+    }
 
     protected function casts(): array
     {

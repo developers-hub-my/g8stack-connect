@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3c97070ebdb77fe2a4697cab4ccbb4ce",
+    "content-hash": "b412c4af38c656333b6dd5ede7cd9147",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -270,6 +270,85 @@
                 }
             ],
             "time": "2023-12-11T17:09:12+00:00"
+        },
+        {
+            "name": "cleaniquecoders/laravel-api-version",
+            "version": "1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/cleaniquecoders/laravel-api-version.git",
+                "reference": "51b3af48058f04f8267742b92793e77d74f0b717"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/cleaniquecoders/laravel-api-version/zipball/51b3af48058f04f8267742b92793e77d74f0b717",
+                "reference": "51b3af48058f04f8267742b92793e77d74f0b717",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0 | ^11.0 | ^12.0",
+                "php": "^8.2 | ^8.3 | ^8.4",
+                "spatie/laravel-package-tools": "^1.16"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.9|^3.0",
+                "laravel/pint": "^1.14",
+                "nesbot/carbon": "^2.63",
+                "nunomaduro/collision": "^8.1.1||^7.10.0",
+                "orchestra/testbench": "9.*",
+                "pestphp/pest": "^2.34 || ^3.0 || ^4.0",
+                "pestphp/pest-plugin-arch": "^2.7 || ^3.0 || ^4.0",
+                "pestphp/pest-plugin-laravel": "^2.3 || ^3.0 || ^4.0",
+                "phpstan/extension-installer": "^1.3",
+                "phpstan/phpstan-deprecation-rules": "^1.1 || ^2.0",
+                "phpstan/phpstan-phpunit": "^1.3 || ^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "LaravelApiVersion": "CleaniqueCoders\\LaravelApiVersion\\Facades\\LaravelApiVersion"
+                    },
+                    "providers": [
+                        "CleaniqueCoders\\LaravelApiVersion\\LaravelApiVersionServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "CleaniqueCoders\\LaravelApiVersion\\": "src/",
+                    "CleaniqueCoders\\LaravelApiVersion\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nasrul Hazim Bin Mohamad",
+                    "email": "nasrulhazim.m@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Effortlessly manage your Laravel API versions with flexible, header-based versioning control.",
+            "homepage": "https://github.com/cleaniquecoders/laravel-api-version",
+            "keywords": [
+                "Cleanique Coders",
+                "laravel",
+                "laravel-api-version"
+            ],
+            "support": {
+                "issues": "https://github.com/cleaniquecoders/laravel-api-version/issues",
+                "source": "https://github.com/cleaniquecoders/laravel-api-version/tree/1.2.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Cleanique Coders",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-10-25T14:36:04+00:00"
         },
         {
             "name": "cleaniquecoders/laravel-media-secure",

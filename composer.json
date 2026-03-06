@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "blade-ui-kit/blade-icons": "^1.9",
+        "cleaniquecoders/laravel-api-version": "^1.2",
         "cleaniquecoders/laravel-media-secure": "^3.2",
         "cleaniquecoders/media-manager": "^1.1",
         "cleaniquecoders/traitify": "^1.3",

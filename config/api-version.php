@@ -1,0 +1,110 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default API Version
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default version of your API that will be used
+    | when no version is specified in the request headers. Define your
+    | API versions here as strings, such as 'v1', 'v2', etc.
+    |
+    */
+
+    'default_version' => 'v1',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Header-Based Versioning
+    |--------------------------------------------------------------------------
+    |
+    | Define how your application handles API versioning through headers.
+    | By default, the package checks the "Accept" header with a structure
+    | like "application/vnd.yourapp+v1.0+json" to extract versioning info.
+    | If not provided, a custom header will be used as a fallback.
+    |
+    */
+
+    'use_accept_header' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Header Name
+    |--------------------------------------------------------------------------
+    |
+    | Define the custom header used to specify the API version when the
+    | "Accept" header is not provided or is not in the required format.
+    | The default custom header is "X-API-Version".
+    |
+    | Examples:
+    |   - X-API-Version: 1.0
+    |   - X-API-Version: v1
+    |
+    */
+
+    'custom_header' => 'X-API-Version',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Version Format
+    |--------------------------------------------------------------------------
+    |
+    | This setting controls the format expected in the versioning header,
+    | particularly for the "Accept" header. Customize this regex pattern
+    | based on your versioning scheme. By default, it captures versions
+    | like "application/vnd.yourapp+v1.0+json".
+    |
+    */
+
+    'accept_header_pattern' => '/application\/vnd\.\w+\+v(\d+(\.\d+)*)\+json/',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Root Namespace for Controllers
+    |--------------------------------------------------------------------------
+    |
+    | Define the root namespace for versioned controllers. The default is
+    | 'App\Http\Controllers\Api', but you can customize this to point
+    | to any other namespace as needed.
+    |
+    */
+
+    'root_namespace' => 'App\Http\Controllers\Api', // Default root namespace
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supported API Versions
+    |--------------------------------------------------------------------------
+    |
+    | Define which API versions are supported by your application. If this
+    | array is empty, all versions will be accepted. If populated, only
+    | the listed versions will be allowed.
+    |
+    */
+
+    'supported_versions' => [
+        // 'v1', 'v2', 'v3'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deprecated API Versions
+    |--------------------------------------------------------------------------
+    |
+    | Define which API versions are deprecated, including sunset dates and
+    | replacement versions. This will add appropriate headers to responses
+    | when deprecated versions are used.
+    |
+    */
+
+    'deprecated_versions' => [
+        // 'v1' => [
+        //     'sunset_date' => '2024-12-31',
+        //     'replacement' => 'v2',
+        //     'message' => 'API v1 is deprecated. Please migrate to v2.',
+        // ],
+    ],
+
+];
