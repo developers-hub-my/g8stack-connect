@@ -5,22 +5,23 @@ declare(strict_types=1);
 namespace App\Services\ApiRuntime;
 
 use App\Models\ApiSpec;
+use App\Models\ApiSpecTable;
 
 class ApiResponseTransformer
 {
-    public function transformCollection(ApiSpec $spec, array $result): array
+    public function transformCollection(ApiSpec $spec, array $result, ?ApiSpecTable $table = null): array
     {
         $result['data'] = array_map(
-            fn ($row) => $this->transformItem($spec, $row),
+            fn ($row) => $this->transformItem($spec, $row, $table),
             $result['data'],
         );
 
         return $result;
     }
 
-    public function transformItem(ApiSpec $spec, array $row): array
+    public function transformItem(ApiSpec $spec, array $row, ?ApiSpecTable $table = null): array
     {
-        $fieldMap = $this->getFieldMap($spec);
+        $fieldMap = $this->getFieldMap($spec, $table);
 
         if (empty($fieldMap)) {
             return $row;
@@ -36,16 +37,15 @@ class ApiResponseTransformer
         return $transformed;
     }
 
-    public function filterInputFields(ApiSpec $spec, array $input): array
+    public function filterInputFields(ApiSpec $spec, array $input, ?ApiSpecTable $table = null): array
     {
-        $exposedColumns = $this->getExposedColumns($spec);
+        $exposedColumns = $this->getExposedColumns($spec, $table);
 
         if (empty($exposedColumns)) {
             return $input;
         }
 
-        // Reverse map: display_name → column_name
-        $reverseMap = $this->getReverseFieldMap($spec);
+        $reverseMap = $this->getReverseFieldMap($spec, $table);
 
         $filtered = [];
 
@@ -60,13 +60,15 @@ class ApiResponseTransformer
         return $filtered;
     }
 
-    protected function getFieldMap(ApiSpec $spec): array
+    protected function getFieldMap(ApiSpec $spec, ?ApiSpecTable $table): array
     {
-        if ($spec->fields->isEmpty()) {
+        $fields = $this->resolveFields($spec, $table);
+
+        if ($fields->isEmpty()) {
             return [];
         }
 
-        return $spec->fields
+        return $fields
             ->filter(fn ($f) => $f->is_exposed)
             ->mapWithKeys(fn ($f) => [
                 $f->column_name => $f->display_name ?? $f->column_name,
@@ -74,13 +76,15 @@ class ApiResponseTransformer
             ->all();
     }
 
-    protected function getReverseFieldMap(ApiSpec $spec): array
+    protected function getReverseFieldMap(ApiSpec $spec, ?ApiSpecTable $table): array
     {
-        if ($spec->fields->isEmpty()) {
+        $fields = $this->resolveFields($spec, $table);
+
+        if ($fields->isEmpty()) {
             return [];
         }
 
-        return $spec->fields
+        return $fields
             ->filter(fn ($f) => $f->is_exposed)
             ->mapWithKeys(fn ($f) => [
                 ($f->display_name ?? $f->column_name) => $f->column_name,
@@ -88,16 +92,30 @@ class ApiResponseTransformer
             ->all();
     }
 
-    protected function getExposedColumns(ApiSpec $spec): array
+    protected function getExposedColumns(ApiSpec $spec, ?ApiSpecTable $table): array
     {
-        if ($spec->fields->isEmpty()) {
+        $fields = $this->resolveFields($spec, $table);
+
+        if ($fields->isEmpty()) {
             return [];
         }
 
-        return $spec->fields
+        return $fields
             ->filter(fn ($f) => $f->is_exposed)
             ->pluck('column_name')
             ->values()
             ->all();
+    }
+
+    protected function resolveFields(ApiSpec $spec, ?ApiSpecTable $table): \Illuminate\Support\Collection
+    {
+        if ($table && $table->exists) {
+            $tableFields = $table->fields;
+            if ($tableFields->isNotEmpty()) {
+                return $tableFields;
+            }
+        }
+
+        return $spec->fields;
     }
 }

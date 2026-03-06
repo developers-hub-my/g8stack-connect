@@ -27,11 +27,17 @@ class ApiSpecField extends Model
             'is_filterable' => 'boolean',
             'is_sortable' => 'boolean',
             'sort_order' => 'integer',
+            'validation_rules' => 'array',
         ];
     }
 
     public function apiSpec(): BelongsTo
     {
         return $this->belongsTo(ApiSpec::class);
+    }
+
+    public function apiSpecTable(): BelongsTo
+    {
+        return $this->belongsTo(ApiSpecTable::class);
     }
 }

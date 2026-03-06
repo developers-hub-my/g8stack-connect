@@ -64,6 +64,26 @@ class ApiSpec extends Model
         return $this->hasMany(ApiSpecField::class)->orderBy('sort_order');
     }
 
+    public function tables(): HasMany
+    {
+        return $this->hasMany(ApiSpecTable::class)->orderBy('sort_order');
+    }
+
+    public function keys(): HasMany
+    {
+        return $this->hasMany(ApiSpecKey::class);
+    }
+
+    public function isGrouped(): bool
+    {
+        return $this->tables()->count() > 1;
+    }
+
+    public function resolveTable(string $resourceName): ?ApiSpecTable
+    {
+        return $this->tables()->where('resource_name', $resourceName)->first();
+    }
+
     public function versions(): HasMany
     {
         return $this->hasMany(ApiSpecVersion::class)->orderByDesc('version_number');

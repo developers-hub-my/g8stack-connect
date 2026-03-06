@@ -7,20 +7,19 @@ namespace App\Services\ApiRuntime;
 use App\Models\ApiSpec;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Schema;
 
 class ApiQueryService
 {
-    public function list(ApiSpec $spec, Request $request): array
+    public function list(ApiSpec $spec, Request $request, ?string $tableName = null): array
     {
         $connection = $this->connect($spec);
-        $table = $this->getTable($spec);
-        $columns = $this->getExposedColumns($spec);
+        $table = $tableName ?? $this->getTable($spec);
+        $columns = $this->getExposedColumns($spec, $table);
 
         $query = $connection->table($table)->select($columns);
 
-        $this->applyFilters($spec, $query, $request);
-        $this->applySorting($spec, $query, $request);
+        $this->applyFilters($spec, $query, $request, $table);
+        $this->applySorting($spec, $query, $request, $table);
 
         $config = $spec->configuration ?? [];
         $pagination = $config['pagination'] ?? true;
@@ -53,12 +52,12 @@ class ApiQueryService
         ];
     }
 
-    public function find(ApiSpec $spec, string $id): ?array
+    public function find(ApiSpec $spec, string $id, ?string $tableName = null): ?array
     {
         $connection = $this->connect($spec);
-        $table = $this->getTable($spec);
-        $columns = $this->getExposedColumns($spec);
-        $primaryKey = $this->getPrimaryKey($spec);
+        $table = $tableName ?? $this->getTable($spec);
+        $columns = $this->getExposedColumns($spec, $table);
+        $primaryKey = $this->getPrimaryKey($spec, $table);
 
         $row = $connection->table($table)
             ->select($columns)
@@ -68,22 +67,21 @@ class ApiQueryService
         return $row ? (array) $row : null;
     }
 
-    public function create(ApiSpec $spec, array $data): array
+    public function create(ApiSpec $spec, array $data, ?string $tableName = null): array
     {
         $connection = $this->connect($spec);
-        $table = $this->getTable($spec);
-        $primaryKey = $this->getPrimaryKey($spec);
+        $table = $tableName ?? $this->getTable($spec);
 
         $id = $connection->table($table)->insertGetId($data);
 
-        return $this->find($spec, (string) $id) ?? $data;
+        return $this->find($spec, (string) $id, $table) ?? $data;
     }
 
-    public function update(ApiSpec $spec, string $id, array $data): ?array
+    public function update(ApiSpec $spec, string $id, array $data, ?string $tableName = null): ?array
     {
         $connection = $this->connect($spec);
-        $table = $this->getTable($spec);
-        $primaryKey = $this->getPrimaryKey($spec);
+        $table = $tableName ?? $this->getTable($spec);
+        $primaryKey = $this->getPrimaryKey($spec, $table);
 
         $affected = $connection->table($table)
             ->where($primaryKey, $id)
@@ -96,14 +94,14 @@ class ApiQueryService
             }
         }
 
-        return $this->find($spec, $id);
+        return $this->find($spec, $id, $table);
     }
 
-    public function delete(ApiSpec $spec, string $id): bool
+    public function delete(ApiSpec $spec, string $id, ?string $tableName = null): bool
     {
         $connection = $this->connect($spec);
-        $table = $this->getTable($spec);
-        $primaryKey = $this->getPrimaryKey($spec);
+        $table = $tableName ?? $this->getTable($spec);
+        $primaryKey = $this->getPrimaryKey($spec, $table);
 
         return $connection->table($table)
             ->where($primaryKey, $id)
@@ -119,7 +117,6 @@ class ApiQueryService
         if (! Config::has("database.connections.{$connectionName}")) {
             $driver = $dataSource->type->value;
 
-            // Map enum value to Laravel driver name
             $laravelDriver = match ($driver) {
                 'postgresql' => 'pgsql',
                 'mssql' => 'sqlsrv',
@@ -168,40 +165,50 @@ class ApiQueryService
         return $tables[0] ?? '';
     }
 
-    protected function getExposedColumns(ApiSpec $spec): array
+    protected function getExposedColumns(ApiSpec $spec, string $tableName): array
     {
-        if ($spec->fields->isEmpty()) {
-            // Simple mode — use schema columns minus PII
-            $schema = $spec->dataSource->schemas()
-                ->where('table_name', $this->getTable($spec))
-                ->first();
+        // Check table-specific fields first
+        $specTable = $spec->tables()->where('table_name', $tableName)->first();
 
-            if (! $schema) {
-                return ['*'];
+        if ($specTable) {
+            $fields = $specTable->fields()->where('is_exposed', true)->get();
+            if ($fields->isNotEmpty()) {
+                return $fields->pluck('column_name')->values()->all();
             }
+        }
 
-            $piiScanner = new \App\Services\PiiDetection\PiiDetectionService;
-            $columnNames = collect($schema->columns)->pluck('name')->all();
-            $piiResult = $piiScanner->scan($columnNames);
-
-            return collect($columnNames)
-                ->reject(fn ($col) => in_array($col, $piiResult->flagged))
+        // Fall back to spec-level fields
+        if ($spec->fields->isNotEmpty()) {
+            return $spec->fields
+                ->filter(fn ($f) => $f->is_exposed)
+                ->pluck('column_name')
                 ->values()
                 ->all();
         }
 
-        // Guided mode — use field config
-        return $spec->fields
-            ->filter(fn ($f) => $f->is_exposed)
-            ->pluck('column_name')
+        // Simple mode — use schema columns minus PII
+        $schema = $spec->dataSource->schemas()
+            ->where('table_name', $tableName)
+            ->first();
+
+        if (! $schema) {
+            return ['*'];
+        }
+
+        $piiScanner = new \App\Services\PiiDetection\PiiDetectionService;
+        $columnNames = collect($schema->columns)->pluck('name')->all();
+        $piiResult = $piiScanner->scan($columnNames);
+
+        return collect($columnNames)
+            ->reject(fn ($col) => in_array($col, $piiResult->flagged))
             ->values()
             ->all();
     }
 
-    protected function getPrimaryKey(ApiSpec $spec): string
+    protected function getPrimaryKey(ApiSpec $spec, string $tableName): string
     {
         $schema = $spec->dataSource->schemas()
-            ->where('table_name', $this->getTable($spec))
+            ->where('table_name', $tableName)
             ->first();
 
         $primaryKeys = $schema->primary_keys ?? ['id'];
@@ -209,7 +216,7 @@ class ApiQueryService
         return $primaryKeys[0] ?? 'id';
     }
 
-    protected function applyFilters(ApiSpec $spec, $query, Request $request): void
+    protected function applyFilters(ApiSpec $spec, $query, Request $request, string $tableName): void
     {
         $filters = $request->input('filter', []);
 
@@ -217,19 +224,30 @@ class ApiQueryService
             return;
         }
 
-        $filterableColumns = $spec->fields
-            ->filter(fn ($f) => $f->is_filterable && $f->is_exposed)
-            ->pluck('column_name')
-            ->all();
+        // Get filterable columns from table-specific or spec-level fields
+        $specTable = $spec->tables()->where('table_name', $tableName)->first();
+        $fields = $specTable
+            ? $specTable->fields()->where('is_filterable', true)->where('is_exposed', true)->get()
+            : $spec->fields->filter(fn ($f) => $f->is_filterable && $f->is_exposed);
 
-        foreach ($filters as $column => $value) {
+        // Build reverse map: display_name → column_name for filter keys
+        $reverseMap = [];
+        $filterableColumns = [];
+        foreach ($fields as $field) {
+            $displayName = $field->display_name ?? $field->column_name;
+            $reverseMap[$displayName] = $field->column_name;
+            $filterableColumns[] = $field->column_name;
+        }
+
+        foreach ($filters as $key => $value) {
+            $column = $reverseMap[$key] ?? $key;
             if (in_array($column, $filterableColumns)) {
                 $query->where($column, $value);
             }
         }
     }
 
-    protected function applySorting(ApiSpec $spec, $query, Request $request): void
+    protected function applySorting(ApiSpec $spec, $query, Request $request, string $tableName): void
     {
         $sort = $request->input('sort');
 
@@ -243,13 +261,23 @@ class ApiQueryService
             $sort = substr($sort, 1);
         }
 
-        $sortableColumns = $spec->fields
-            ->filter(fn ($f) => $f->is_sortable && $f->is_exposed)
-            ->pluck('column_name')
-            ->all();
+        $specTable = $spec->tables()->where('table_name', $tableName)->first();
+        $fields = $specTable
+            ? $specTable->fields()->where('is_sortable', true)->where('is_exposed', true)->get()
+            : $spec->fields->filter(fn ($f) => $f->is_sortable && $f->is_exposed);
 
-        if (in_array($sort, $sortableColumns)) {
-            $query->orderBy($sort, $direction);
+        // Build reverse map for sort field
+        $reverseMap = [];
+        $sortableColumns = [];
+        foreach ($fields as $field) {
+            $displayName = $field->display_name ?? $field->column_name;
+            $reverseMap[$displayName] = $field->column_name;
+            $sortableColumns[] = $field->column_name;
+        }
+
+        $column = $reverseMap[$sort] ?? $sort;
+        if (in_array($column, $sortableColumns)) {
+            $query->orderBy($column, $direction);
         }
     }
 }
