@@ -78,7 +78,7 @@ complexity is abstracted per user type.
 | v0.1 | Foundation | Auth + DB connectors + Simple Mode (local specs only) | Done |
 | v0.2 | Guided Mode | Field selection, methods, filters, spec versioning | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Done |
-| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Done |
+| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Near-complete |
 | v0.3 | File Sources | CSV, JSON, Excel → read-only specs | Planned |
 | v0.4 | Advanced Mode | SELECT SQL → named GET endpoint specs | Planned |
 | v0.5 | G8Stack Push | Spec submission, webhook, status tracking | Planned |

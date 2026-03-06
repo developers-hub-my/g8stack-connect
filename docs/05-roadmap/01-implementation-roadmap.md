@@ -12,7 +12,7 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 | v0.1 | Foundation | Auth + DB connections + Simple Mode | Internal / Dev | Done |
 | v0.2 | Guided Mode | Field selection, methods, filters, versioning | Beta | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
-| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Done |
+| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Near-complete (1 item left) |
 | v0.3 | File Sources | CSV, JSON, Excel | Beta | Planned |
 | v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
 | v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
@@ -182,9 +182,11 @@ database/migrations/2026_03_06_100006_add_slug_to_api_specs_table.php
 - [x] Only configured HTTP methods allowed per spec
 - [x] Field display name mapping applied in responses
 
-## v0.2.2 — Runtime Hardening
+## v0.2.2 — Runtime Hardening (17/18 exit criteria done)
 
 **Goal**: Make the dynamic API runtime production-ready — input validation, multi-table grouped specs, API security, and custom response headers.
+
+**Status**: Near-complete — only Key Management UI remaining.
 
 ### Scope
 
@@ -374,23 +376,23 @@ database/migrations/xxxx_create_api_spec_tables_table.php
 
 ### Exit Criteria
 
-- [ ] Per-resource CRUD toggle — each operation independently enable/disable
-- [ ] Default to read-only — write operations require explicit opt-in
-- [ ] Disabled operations return 405 with clear message
-- [ ] Wizard UI shows CRUD checkboxes per resource (Simple + Guided)
-- [ ] Table names remapped to clean resource names — raw DB names never in API responses
-- [ ] Column names remapped via `display_name` — raw DB column names never exposed
-- [ ] Simple Mode auto-suggests clean resource/field names (strip prefixes, pluralise)
-- [ ] Error messages and validation use remapped names, never internal column names
-- [ ] POST/PUT requests validate input against schema-derived rules
-- [ ] Validation errors return 422 with field-level messages (using remapped names)
-- [ ] Multi-table specs serve nested endpoints under one slug using resource names
-- [ ] `GET /api/connect/{slug}` returns resource listing for grouped specs
-- [ ] API key auth enforced — unauthenticated requests return 401
-- [ ] Rate limiting returns 429 with `Retry-After` header
-- [ ] Custom headers appear in all API responses
-- [ ] Security headers (`X-Content-Type-Options`, `X-Frame-Options`) always present
-- [ ] Request logging captures method, path, key, IP, status, latency
+- [x] Per-resource CRUD toggle — each operation independently enable/disable
+- [x] Default to read-only — write operations require explicit opt-in
+- [x] Disabled operations return 405 with clear message
+- [x] Wizard UI shows CRUD checkboxes per resource (Simple + Guided)
+- [x] Table names remapped to clean resource names — raw DB names never in API responses
+- [x] Column names remapped via `display_name` — raw DB column names never exposed
+- [x] Simple Mode auto-suggests clean resource/field names (strip prefixes, pluralise)
+- [x] Error messages and validation use remapped names, never internal column names
+- [x] POST/PUT requests validate input against schema-derived rules
+- [x] Validation errors return 422 with field-level messages (using remapped names)
+- [x] Multi-table specs serve nested endpoints under one slug using resource names
+- [x] `GET /api/connect/{slug}` returns resource listing for grouped specs
+- [x] API key auth enforced — unauthenticated requests return 401
+- [x] Rate limiting returns 429 with `Retry-After` header
+- [x] Custom headers appear in all API responses
+- [x] Security headers (`X-Content-Type-Options`, `X-Frame-Options`) always present
+- [x] Request logging captures method, path, key, IP, status, latency
 - [ ] Key management UI allows generate, revoke, regenerate
 
 ### What's NOT in v0.2.2
@@ -574,7 +576,7 @@ stateDiagram-v2
 graph LR
     v01["v0.1 Foundation ✅"] --> v02["v0.2 Guided Mode ✅"]
     v02 --> v021["v0.2.1 Dynamic Runtime ✅"]
-    v021 --> v022["v0.2.2 Runtime Hardening"]
+    v021 --> v022["v0.2.2 Runtime Hardening ⏳"]
     v022 --> v03["v0.3 File Sources"]
     v022 --> v04["v0.4 Advanced SQL"]
     v04 --> v05["v0.5 G8Stack Push"]
@@ -590,28 +592,30 @@ graph LR
 | v0.3 | CSV, JSON, Excel (.xlsx) |
 | Post-v1.0 | MongoDB, Redis, XML, Parquet, REST/SOAP, S3/MinIO, Google Sheets, SFTP |
 
-## What's Next — v0.2.2 Runtime Hardening
+## What's Next — Finish v0.2.2, Then v0.3
 
-Priority order for v0.2.2:
+### v0.2.2 Remaining
 
-1. **Input Validation** — validate POST/PUT against schema-derived rules (type, required, length)
-2. **API Security** — API key auth, rate limiting, CORS for `/api/connect/` endpoints
-3. **Grouped Specs** — multi-table support under one slug with nested endpoints
-4. **Response Headers** — security headers, custom headers, pagination headers
+Only **1 item** left to complete v0.2.2:
 
-### Suggested Implementation Order
+1. **Key Management UI** — Livewire component to generate, revoke, regenerate API keys per spec
+   - `ApiSpecKey` model exists, `ApiKeyAuthentication` middleware works
+   - Need: `app/Livewire/ApiSpec/KeyManagement.php` + blade view
+   - Integrate into API Spec show page (new tab or section)
+
+### v0.3 — File Sources (next phase)
+
+Priority order:
 
 ```
-Step 1:  CRUD operation control (per-resource toggles, default read-only, 405 enforcement)
-Step 2:  Resource & field remapping (ApiSpecTable model, ResourceNameSuggester, update transformer)
-Step 3:  ApiValidationService + schema-derived rules (using remapped names, write ops only)
-Step 4:  api_spec_keys migration + ApiSpecKey model + auth middleware
-Step 5:  Rate limiting middleware (per-key throttle)
-Step 6:  Multi-table spec support (grouped endpoints, nested routing)
-Step 7:  ApiHeaderService + security headers + custom headers
-Step 8:  Key management UI + resource mapper UI + CRUD toggles UI (Livewire)
-Step 9:  Request logging
-Step 10: Tests for all above
+Step 1:  CsvConnector — parse headers, infer types, preview rows
+Step 2:  JsonConnector — detect array structure, infer field types
+Step 3:  ExcelConnector — read .xlsx sheets, headers, types
+Step 4:  FileIntrospector — unified introspection for all file types
+Step 5:  FileUploadWizard — Livewire upload UI with Spatie MediaLibrary
+Step 6:  Read-only spec generation (GET list + GET single only)
+Step 7:  Temp file cleanup after processing
+Step 8:  Tests for all above
 ```
 
 ## References
