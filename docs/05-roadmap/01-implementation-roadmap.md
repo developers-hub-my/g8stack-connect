@@ -12,6 +12,7 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 | v0.1 | Foundation | Auth + DB connections + Simple Mode | Internal / Dev | Done |
 | v0.2 | Guided Mode | Field selection, methods, filters, versioning | Beta | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
+| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Planned |
 | v0.3 | File Sources | CSV, JSON, Excel | Beta | Planned |
 | v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
 | v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
@@ -27,13 +28,15 @@ gantt
     v0.1 Foundation         :done, 2026-03-01, 2026-03-06
     v0.2 Guided Mode        :done, 2026-03-06, 2026-03-06
     v0.2.1 Dynamic Runtime  :done, 2026-03-06, 2026-03-06
+  section Hardening
+    v0.2.2 Runtime Hardening :2026-03-07, 2026-03-20
   section Core Modes
-    v0.3 File Sources       :2026-03-10, 2026-04-15
-    v0.4 Advanced SQL Mode  :2026-04-16, 2026-05-15
+    v0.3 File Sources       :2026-03-21, 2026-04-20
+    v0.4 Advanced SQL Mode  :2026-04-21, 2026-05-20
   section Integration
-    v0.5 G8Stack Push       :2026-05-16, 2026-06-15
+    v0.5 G8Stack Push       :2026-05-21, 2026-06-20
   section Release
-    v1.0 GA Release         :2026-06-16, 2026-07-31
+    v1.0 GA Release         :2026-06-21, 2026-07-31
 ```
 
 ## v0.1 — Foundation ✅
@@ -167,6 +170,226 @@ database/migrations/2026_03_06_100006_add_slug_to_api_specs_table.php
 - [x] Filtering, sorting, pagination work via query params
 - [x] Only configured HTTP methods allowed per spec
 - [x] Field display name mapping applied in responses
+
+## v0.2.2 — Runtime Hardening
+
+**Goal**: Make the dynamic API runtime production-ready — input validation, multi-table grouped specs, API security, and custom response headers.
+
+### Scope
+
+#### 1. CRUD Operation Control
+
+Allow spec owners to choose exactly which operations are available per resource — not just enable/disable HTTP methods, but fine-grained control over Create, Read, Update, and Delete:
+
+- **Per-resource toggle** — each table/resource in a spec can independently enable/disable C, R, U, D
+- **Read sub-options** — `list` (GET collection) and `show` (GET single) can be toggled separately
+- **Write restrictions** — allow Create but not Update, or Update but not Delete, etc.
+- **Wizard integration** — checkboxes in both Simple and Guided Mode wizard
+- **Simple Mode defaults** — Read-only (list + show) by default, user opts in to write operations
+- **Guided Mode defaults** — all operations enabled, user can disable individually
+- **Spec-level override** — `configuration.methods` sets the overall allowed methods
+- **Resource-level override** — per-table operations stored in `ApiSpecTable.operations`
+- **Runtime enforcement** — `DynamicApiController` checks both spec-level and resource-level before executing
+
+```php
+// Per-resource operation config (stored in api_spec_tables.operations)
+'operations' => [
+    'create' => true,    // POST
+    'list'   => true,    // GET collection
+    'show'   => true,    // GET single
+    'update' => false,   // PUT — disabled
+    'delete' => false,   // DELETE — disabled
+],
+
+// API response when disabled operation is attempted:
+// 405 Method Not Allowed
+{
+    "message": "This operation is not available for this resource."
+}
+```
+
+> **Rule:** Default to read-only. Write operations (Create, Update, Delete) should be
+> explicitly opted-in, never automatically enabled. This protects source databases from
+> accidental writes through the API.
+
+#### 2. Input Validation (write operations only)
+
+Runtime endpoints currently accept any input. Add validation before data hits the database:
+
+- **Type validation** — enforce data types from introspected schema (string, integer, date, etc.)
+- **Required fields** — validate required columns on `POST`/`PUT` based on `ApiSpecField.is_required`
+- **Max length / numeric range** — derive from DB column definitions (varchar length, int precision)
+- **Unique constraints** — validate uniqueness for columns marked unique in schema
+- **Custom validation rules** — allow per-field rules in `ApiSpecField` config (regex, in-list, etc.)
+- **Validation error response** — standard JSON format with field-level errors (422 Unprocessable Entity)
+
+```php
+// Expected validation error response
+{
+    "message": "Validation failed.",
+    "errors": {
+        "email": ["The email field must be a valid email address."],
+        "name": ["The name field is required."]
+    }
+}
+```
+
+#### 3. Resource & Field Remapping
+
+Never expose raw database table or column names in the API. Remap everything to clean, secure, domain-relevant names:
+
+- **Table → Resource name** — `tbl_usr_accounts` → `users`, `emp_department_v2` → `departments`
+- **Column → Field name** — `usr_email_addr` → `email`, `ic_no` → removed or remapped
+- **Auto-suggest** — strip common prefixes (`tbl_`, `tb_`, `t_`), convert to plural resource names
+- **Manual override** — user can set any display name during wizard
+- **Stored in `ApiSpecField`** — `column_name` (internal) vs `display_name` (API-facing)
+- **Stored in `ApiSpecTable`** — `table_name` (internal) vs `resource_name` (API-facing)
+- **Bidirectional mapping** — input accepts remapped names, output uses remapped names
+- **Internal names never leak** — error messages, headers, and logs use remapped names only
+
+```php
+// Database reality:
+// Table: tbl_emp_records
+// Columns: emp_id, emp_full_name, emp_email_addr, emp_ic_no, emp_dept_code
+
+// API surface after remapping:
+// Resource: employees
+// Fields: id, full_name, email, department_code
+// (emp_ic_no excluded — PII flagged)
+
+GET /api/connect/hr-system/employees
+{
+    "data": [
+        {
+            "id": 1,
+            "full_name": "Ahmad bin Hassan",
+            "email": "ahmad@company.com",
+            "department_code": "ENG"
+        }
+    ]
+}
+```
+
+> **Rule:** Column remapping already exists in `ApiSpecField.display_name` for Guided Mode.
+> This extends it to table-level remapping and makes it the default behaviour — not opt-in.
+> Simple Mode should auto-suggest clean names, not blindly copy DB names.
+
+#### 4. Grouped API Spec (Multi-Table)
+
+Currently each spec maps to a single table. Allow grouping multiple tables under one spec slug:
+
+- **Multi-table selection** — select multiple tables during wizard (Simple & Guided)
+- **Nested endpoints** — `/api/connect/{slug}/{resource}` using remapped resource names (never raw table names)
+- **Root spec info** — `GET /api/connect/{slug}` returns available resources in the group
+- **Per-table field config** — each table has its own `ApiSpecField` entries with remapped names
+- **Shared configuration** — methods, pagination, auth settings apply to entire spec group
+- **Relationship hints** — optional FK-based linking between resources (read-only, no auto-joins)
+
+```
+# Database tables: tbl_emp_records, tbl_dept_master, tbl_positions
+# After remapping:
+
+GET  /api/connect/hr-system              → list available resources
+GET  /api/connect/hr-system/employees    → list employees (from tbl_emp_records)
+GET  /api/connect/hr-system/departments  → list departments (from tbl_dept_master)
+GET  /api/connect/hr-system/employees/5  → single employee
+POST /api/connect/hr-system/employees    → create employee
+```
+
+#### 5. API Security
+
+Secure the `/api/connect/` endpoints — currently open to anyone:
+
+- **API Key authentication** — per-spec API keys stored in `api_spec_keys` table
+- **Key management UI** — generate, revoke, regenerate keys per spec
+- **Rate limiting** — per-key throttle (configurable per spec, default 60 req/min)
+- **IP allowlist** — optional IP restriction per spec
+- **CORS configuration** — per-spec allowed origins (default: same-origin)
+- **Request logging** — log every API call (method, path, key, IP, status, latency)
+
+```php
+// api_spec_keys table
+Schema::create('api_spec_keys', function (Blueprint $table) {
+    $table->uuid('id')->primary();
+    $table->foreignUuid('api_spec_id')->constrained()->cascadeOnDelete();
+    $table->string('name');               // "Production Key", "Dev Key"
+    $table->string('key_hash')->unique(); // hashed API key
+    $table->string('key_prefix');         // first 8 chars for identification
+    $table->integer('rate_limit')->default(60); // requests per minute
+    $table->json('allowed_ips')->nullable();
+    $table->json('allowed_origins')->nullable();
+    $table->timestamp('expires_at')->nullable();
+    $table->timestamp('last_used_at')->nullable();
+    $table->timestamps();
+    $table->softDeletes();
+});
+```
+
+#### 6. Custom Response Headers
+
+Allow spec owners to configure custom headers on API responses:
+
+- **Standard headers** — `X-Request-Id`, `X-Response-Time`, `Cache-Control`
+- **Configurable headers** — per-spec custom headers stored in `configuration` JSON
+- **Security headers** — `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (always on)
+- **Pagination headers** — `X-Total-Count`, `X-Page`, `X-Per-Page` in addition to body meta
+- **CORS headers** — `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods` based on spec config
+
+```php
+// Stored in api_specs.configuration
+'headers' => [
+    'X-Powered-By' => 'G8Connect',
+    'Cache-Control' => 'no-cache',
+    'custom' => [
+        'X-Department' => 'Engineering',
+    ],
+],
+```
+
+### Deliverables
+
+```text
+app/Services/ApiRuntime/ApiValidationService.php
+app/Services/ApiRuntime/ApiSecurityMiddleware.php
+app/Services/ApiRuntime/ApiHeaderService.php
+app/Services/ApiRuntime/ResourceNameSuggester.php
+app/Models/ApiSpecKey.php
+app/Models/ApiSpecTable.php
+app/Livewire/ApiSpec/KeyManagement.php
+app/Livewire/ApiSpec/ResourceMapper.php
+database/migrations/xxxx_create_api_spec_keys_table.php
+database/migrations/xxxx_create_api_spec_tables_table.php
+```
+
+### Exit Criteria
+
+- [ ] Per-resource CRUD toggle — each operation independently enable/disable
+- [ ] Default to read-only — write operations require explicit opt-in
+- [ ] Disabled operations return 405 with clear message
+- [ ] Wizard UI shows CRUD checkboxes per resource (Simple + Guided)
+- [ ] Table names remapped to clean resource names — raw DB names never in API responses
+- [ ] Column names remapped via `display_name` — raw DB column names never exposed
+- [ ] Simple Mode auto-suggests clean resource/field names (strip prefixes, pluralise)
+- [ ] Error messages and validation use remapped names, never internal column names
+- [ ] POST/PUT requests validate input against schema-derived rules
+- [ ] Validation errors return 422 with field-level messages (using remapped names)
+- [ ] Multi-table specs serve nested endpoints under one slug using resource names
+- [ ] `GET /api/connect/{slug}` returns resource listing for grouped specs
+- [ ] API key auth enforced — unauthenticated requests return 401
+- [ ] Rate limiting returns 429 with `Retry-After` header
+- [ ] Custom headers appear in all API responses
+- [ ] Security headers (`X-Content-Type-Options`, `X-Frame-Options`) always present
+- [ ] Request logging captures method, path, key, IP, status, latency
+- [ ] Key management UI allows generate, revoke, regenerate
+
+### What's NOT in v0.2.2
+
+- No OAuth2 / JWT — API key is sufficient for now
+- No auto-join across tables — relationship hints are informational only
+- No webhook on API key events — just audit log
+- No per-endpoint rate limits — rate limit is per key, per spec
+
+---
 
 ## v0.3 — File Sources
 
@@ -311,8 +534,7 @@ stateDiagram-v2
 - Spec expiry — specs older than X days prompt re-validation before push
 - Multi-org support (basic) — data sources scoped to team/organisation
 - Read-only connection enforcement validator — warn if account has write grants
-- Rate limiting on dynamic runtime endpoints and introspection/preview
-- Authentication for dynamic API endpoints (API keys / Sanctum)
+- Rate limiting on introspection/preview endpoints
 - Full test coverage (feature + unit, Pest)
 - Docs: user guide, admin guide, G8Stack integration guide
 - Demo seed data — realistic but fake data sources for prospects
@@ -341,12 +563,11 @@ stateDiagram-v2
 graph LR
     v01["v0.1 Foundation ✅"] --> v02["v0.2 Guided Mode ✅"]
     v02 --> v021["v0.2.1 Dynamic Runtime ✅"]
-    v01 --> v03["v0.3 File Sources"]
-    v01 --> v04["v0.4 Advanced SQL"]
-    v02 --> v03
+    v021 --> v022["v0.2.2 Runtime Hardening"]
+    v022 --> v03["v0.3 File Sources"]
+    v022 --> v04["v0.4 Advanced SQL"]
     v04 --> v05["v0.5 G8Stack Push"]
     v03 --> v05
-    v02 --> v05
     v05 --> v10["v1.0 GA Release"]
 ```
 
@@ -358,28 +579,29 @@ graph LR
 | v0.3 | CSV, JSON, Excel (.xlsx) |
 | Post-v1.0 | MongoDB, Redis, XML, Parquet, REST/SOAP, S3/MinIO, Google Sheets, SFTP |
 
-## What's Next — v0.3 File Sources
+## What's Next — v0.2.2 Runtime Hardening
 
-The next phase adds file-based data sources (CSV, JSON, Excel). Key work:
+Priority order for v0.2.2:
 
-1. **File Connectors** — `CsvConnector`, `JsonConnector`, `ExcelConnector` implementing `DataSourceConnector`
-2. **File Introspector** — detect headers, infer column types from content
-3. **File Upload Wizard** — Livewire component with Spatie MediaLibrary integration
-4. **Read-only spec generation** — GET endpoints only (no writes from file sources)
-5. **Temp file cleanup** — don't persist raw uploads long-term
+1. **Input Validation** — validate POST/PUT against schema-derived rules (type, required, length)
+2. **API Security** — API key auth, rate limiting, CORS for `/api/connect/` endpoints
+3. **Grouped Specs** — multi-table support under one slug with nested endpoints
+4. **Response Headers** — security headers, custom headers, pagination headers
 
-### Recommended Approach
+### Suggested Implementation Order
 
-- Extend `DataSourceType` enum with `CSV`, `JSON`, `EXCEL` cases
-- Extend `ConnectorFactory` to resolve file connectors
-- File connectors load data into a temp SQLite DB for consistent query interface
-- Reuse existing `CrudSpecGenerator` / `GuidedSpecGenerator` with method restriction (GET only)
-
-### Also Consider (before v0.3)
-
-- **Dynamic runtime auth** — API key or Sanctum token for `/api/connect/` endpoints
-- **Runtime tests** — integration tests for `DynamicApiController`, `ApiQueryService`
-- **Rate limiting** — throttle dynamic API endpoints
+```
+Step 1:  CRUD operation control (per-resource toggles, default read-only, 405 enforcement)
+Step 2:  Resource & field remapping (ApiSpecTable model, ResourceNameSuggester, update transformer)
+Step 3:  ApiValidationService + schema-derived rules (using remapped names, write ops only)
+Step 4:  api_spec_keys migration + ApiSpecKey model + auth middleware
+Step 5:  Rate limiting middleware (per-key throttle)
+Step 6:  Multi-table spec support (grouped endpoints, nested routing)
+Step 7:  ApiHeaderService + security headers + custom headers
+Step 8:  Key management UI + resource mapper UI + CRUD toggles UI (Livewire)
+Step 9:  Request logging
+Step 10: Tests for all above
+```
 
 ## References
 

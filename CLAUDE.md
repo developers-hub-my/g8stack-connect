@@ -78,6 +78,7 @@ complexity is abstracted per user type.
 | v0.1 | Foundation | Auth + DB connectors + Simple Mode (local specs only) | Done |
 | v0.2 | Guided Mode | Field selection, methods, filters, spec versioning | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Done |
+| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Planned |
 | v0.3 | File Sources | CSV, JSON, Excel → read-only specs | Planned |
 | v0.4 | Advanced Mode | SELECT SQL → named GET endpoint specs | Planned |
 | v0.5 | G8Stack Push | Spec submission, webhook, status tracking | Planned |
@@ -199,6 +200,12 @@ DELETE /api/connect/{slug}/{id}  → delete
 > **Preference:** No version numbers in URI paths. API versioning is handled via headers
 > (`X-API-Version` / `Accept` header) using `cleaniquecoders/laravel-api-version` middleware.
 > Dynamic endpoints always use `/api/connect/` prefix.
+
+> **Rule:** Never expose raw database table or column names in API responses. All table names
+> must be remapped to clean resource names (e.g. `tbl_emp_records` → `employees`) and all
+> columns to domain-relevant field names (e.g. `usr_email_addr` → `email`). This applies to
+> response payloads, error messages, validation messages, and URL paths. Internal DB structure
+> should never leak through the API surface.
 
 ### G8Stack Integration
 
@@ -476,6 +483,9 @@ class ConnectDataSource extends Component
 - Limit data preview to max 5 rows
 - Audit every data source connection attempt
 - Queue G8Stack push jobs — never synchronous in request cycle
+- Remap table names to clean resource names and column names to domain-relevant field names
+- Auto-suggest clean names in Simple Mode (strip prefixes like `tbl_`, `tb_`, pluralise)
+- Default to read-only for dynamic API — write operations (C, U, D) must be explicitly opted-in per resource
 
 ### DON'T
 
@@ -494,6 +504,7 @@ class ConnectDataSource extends Component
 - Make SQL row cap or timeout configurable — these are hardcoded safety limits
 - Build features ahead of their designated phase — scope discipline is critical
 - Put API version numbers in URI paths — use header-based versioning instead
+- Expose raw database table or column names in API responses, errors, or URLs
 
 ---
 
