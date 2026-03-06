@@ -1,31 +1,35 @@
 <div>
-    <div class="mb-6 flex items-center justify-between">
+    <flux:breadcrumbs class="mb-6">
+        <flux:breadcrumbs.item :href="route('api-specs.index')" wire:navigate>API Specs</flux:breadcrumbs.item>
+        <flux:breadcrumbs.item>{{ $apiSpec->name }}</flux:breadcrumbs.item>
+    </flux:breadcrumbs>
+
+    <div class="flex items-end justify-between">
         <div>
-            <flux:heading size="xl">{{ $apiSpec->name }}</flux:heading>
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                {{ $apiSpec->wizard_mode->label() }} &middot;
+            <div class="flex items-center gap-3">
+                <flux:heading size="xl" level="1">{{ $apiSpec->name }}</flux:heading>
                 <flux:badge size="sm" :color="match($apiSpec->status->value) { 'pending' => 'yellow', 'pushed' => 'blue', 'approved' => 'green', 'rejected' => 'red', 'deployed' => 'emerald', default => 'zinc' }">
                     {{ $apiSpec->status->label() }}
                 </flux:badge>
-            </p>
+            </div>
+            <flux:text class="mt-2">{{ $apiSpec->wizard_mode->label() }} mode</flux:text>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2">
             <flux:button variant="primary" size="sm" :href="route('api-specs.edit', ['uuid' => $apiSpec->uuid])" wire:navigate icon="pencil">
                 Edit
             </flux:button>
             @if($apiSpec->wizard_mode->value === 'guided')
-                <flux:button variant="ghost" :href="route('api-specs.configure', ['uuid' => $apiSpec->uuid])" wire:navigate icon="settings">
+                <flux:button variant="ghost" size="sm" :href="route('api-specs.configure', ['uuid' => $apiSpec->uuid])" wire:navigate icon="settings">
                     Configure
                 </flux:button>
             @endif
-            <flux:button variant="ghost" :href="route('api-specs.versions', ['uuid' => $apiSpec->uuid])" wire:navigate icon="history">
+            <flux:button variant="ghost" size="sm" :href="route('api-specs.versions', ['uuid' => $apiSpec->uuid])" wire:navigate icon="history">
                 Versions
-            </flux:button>
-            <flux:button variant="ghost" :href="route('api-specs.index')" wire:navigate icon="arrow-left">
-                Back
             </flux:button>
         </div>
     </div>
+
+    <flux:separator variant="subtle" class="my-6" />
 
     {{-- OpenAPI Spec --}}
     @if($apiSpec->openapi_spec)

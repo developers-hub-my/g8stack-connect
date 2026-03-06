@@ -24,7 +24,7 @@ class GuidedConfigWizard extends Component
 
     public array $fields = [];
 
-    public array $methods = ['GET', 'POST', 'PUT', 'DELETE'];
+    public array $operations = [];
 
     public bool $pagination = true;
 
@@ -40,12 +40,36 @@ class GuidedConfigWizard extends Component
             $this->selectedTableId = (string) $tables->first()->id;
         }
 
-        $this->loadFieldsForTable();
+        $this->loadTableData();
     }
 
     public function updatedSelectedTableId(): void
     {
+        $this->loadTableData();
+    }
+
+    protected function loadTableData(): void
+    {
+        $this->loadOperationsForTable();
         $this->loadFieldsForTable();
+    }
+
+    protected function loadOperationsForTable(): void
+    {
+        if (! $this->selectedTableId) {
+            $this->operations = [];
+
+            return;
+        }
+
+        $table = ApiSpecTable::find($this->selectedTableId);
+        if (! $table) {
+            $this->operations = [];
+
+            return;
+        }
+
+        $this->operations = $table->operations ?? $table->getDefaultOperations();
     }
 
     protected function loadFieldsForTable(): void
@@ -118,12 +142,10 @@ class GuidedConfigWizard extends Component
         }
     }
 
-    public function toggleMethod(string $method): void
+    public function toggleOperation(string $operation): void
     {
-        if (in_array($method, $this->methods)) {
-            $this->methods = array_values(array_diff($this->methods, [$method]));
-        } else {
-            $this->methods[] = $method;
+        if (array_key_exists($operation, $this->operations)) {
+            $this->operations[$operation] = ! $this->operations[$operation];
         }
     }
 
@@ -139,6 +161,9 @@ class GuidedConfigWizard extends Component
         if (! $table) {
             return;
         }
+
+        // Save operations to the table
+        $table->update(['operations' => $this->operations]);
 
         // Delete existing fields for this table and recreate
         $table->fields()->delete();
@@ -159,6 +184,9 @@ class GuidedConfigWizard extends Component
             ]);
         }
 
+        // Derive methods from operations for spec generation
+        $methods = $this->deriveMethodsFromOperations();
+
         $schema = DataSourceSchema::where('data_source_id', $this->apiSpec->data_source_id)
             ->where('table_name', $table->table_name)
             ->first();
@@ -167,7 +195,7 @@ class GuidedConfigWizard extends Component
             $generator = new GuidedSpecGenerator;
             $spec = $generator->generate($schema, [
                 'fields' => $this->fields,
-                'methods' => $this->methods,
+                'methods' => $methods,
                 'pagination' => $this->pagination,
                 'per_page' => $this->perPage,
             ]);
@@ -179,7 +207,7 @@ class GuidedConfigWizard extends Component
                 [
                     'table' => $table->table_name,
                     'fields' => $this->fields,
-                    'methods' => $this->methods,
+                    'operations' => $this->operations,
                     'pagination' => $this->pagination,
                     'per_page' => $this->perPage,
                 ],
@@ -188,6 +216,29 @@ class GuidedConfigWizard extends Component
         }
 
         $this->alert('Success', "Configuration saved for {$table->resource_name}.");
+    }
+
+    protected function deriveMethodsFromOperations(): array
+    {
+        $methods = [];
+
+        if ($this->operations['list'] ?? false) {
+            $methods[] = 'GET';
+        }
+        if ($this->operations['show'] ?? false) {
+            $methods[] = 'GET';
+        }
+        if ($this->operations['create'] ?? false) {
+            $methods[] = 'POST';
+        }
+        if ($this->operations['update'] ?? false) {
+            $methods[] = 'PUT';
+        }
+        if ($this->operations['delete'] ?? false) {
+            $methods[] = 'DELETE';
+        }
+
+        return array_unique($methods);
     }
 
     public function render(): \Illuminate\View\View
