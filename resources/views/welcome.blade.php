@@ -56,7 +56,7 @@
 
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
                         Connect any database or file, introspect the schema, and auto-generate OpenAPI specs.
-                        Every draft goes through G8Stack governance before deployment — speed up creation without skipping approval.
+                        Every spec goes through G8Stack governance before deployment — speed up creation without skipping approval.
                     </p>
 
                     <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -152,7 +152,7 @@
                     <div class="relative bg-white p-8 dark:bg-zinc-800">
                         <div class="mb-4 flex items-center space-x-3">
                             <span class="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-400">5</span>
-                            <h3 class="font-semibold text-zinc-900 dark:text-white">Generate Draft</h3>
+                            <h3 class="font-semibold text-zinc-900 dark:text-white">Generate Spec</h3>
                         </div>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400">
                             OpenAPI 3.1 spec generated instantly. Review it, version it, refine it before submission.
@@ -201,7 +201,7 @@
                                 </li>
                                 <li class="flex items-start space-x-3">
                                     <x-lucide-check class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" />
-                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">Auto-generate full CRUD draft</span>
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">Auto-generate full CRUD spec</span>
                                 </li>
                                 <li class="flex items-start space-x-3">
                                     <x-lucide-check class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" />
@@ -315,7 +315,7 @@
                         </div>
                         <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">PII Auto-Detection</h3>
                         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                            Sensitive columns like NRIC, passwords, and bank details flagged automatically and excluded from drafts by default.
+                            Sensitive columns like NRIC, passwords, and bank details flagged automatically and excluded from specs by default.
                         </p>
                     </div>
 
@@ -326,7 +326,7 @@
                         </div>
                         <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Full Audit Trail</h3>
                         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                            Every connection, introspection, and draft generation is logged. Know who accessed what, when, and why.
+                            Every connection, introspection, and spec generation is logged. Know who accessed what, when, and why.
                         </p>
                     </div>
 
@@ -352,14 +352,14 @@
                         </p>
                     </div>
 
-                    {{-- Feature: Draft Versioning --}}
+                    {{-- Feature: Spec Versioning --}}
                     <div class="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-800/50">
                         <div class="mb-4 inline-flex rounded-lg bg-cyan-100 p-3 dark:bg-cyan-900/50">
                             <x-lucide-git-branch class="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
                         </div>
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Draft Versioning</h3>
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Spec Versioning</h3>
                         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                            Every regeneration creates a new version. Compare drafts, track changes, and submit only when ready.
+                            Every regeneration creates a new version. Compare specs, track changes, and submit only when ready.
                         </p>
                     </div>
                 </div>
@@ -376,7 +376,7 @@
                     Speed Up Creation.<br>Never Skip Governance.
                 </h2>
                 <p class="mx-auto mt-6 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
-                    G8Connect generates drafts. G8Stack approves them. Kong deploys them.
+                    G8Connect generates specs. G8Stack approves them. Kong deploys them.
                     Clear separation of concerns for teams that take API governance seriously.
                 </p>
 

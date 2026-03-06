@@ -17,6 +17,7 @@ return [
     'roles' => [
         'superadmin' => 'Full system access (Dictator)',
         'administrator' => 'Handles administration and security related works.',
+        'developer' => 'Connect data sources, generate and view API specs.',
         'user' => 'Default user role, can create and participate in events.',
     ],
 
@@ -77,6 +78,22 @@ return [
             'access.user' => 'Access User Dashboard',
             'access.admin' => 'Access Admin Dashboard',
         ],
+
+        'datasource' => [
+            'connect.source' => 'Connect a New Data Source',
+            'introspect.source' => 'Introspect Data Source Schema',
+            'preview.data' => 'Preview Data Source Sample Data',
+            'view.list' => 'View Data Source List',
+            'update.source' => 'Update Data Source',
+            'delete.source' => 'Delete Data Source',
+        ],
+
+        'spec' => [
+            'generate.spec' => 'Generate OpenAPI Spec',
+            'view.list' => 'View Generated Specs',
+            'view.detail' => 'View Spec Detail',
+            'delete.spec' => 'Delete Spec',
+        ],
     ],
 
     /*
@@ -121,6 +138,40 @@ return [
 
             // Dashboard
             'dashboard.access.admin',
+
+            // Data Sources
+            'datasource.connect.source',
+            'datasource.introspect.source',
+            'datasource.preview.data',
+            'datasource.view.list',
+            'datasource.update.source',
+            'datasource.delete.source',
+
+            // API Specs
+            'spec.generate.spec',
+            'spec.view.list',
+            'spec.view.detail',
+            'spec.delete.spec',
+        ],
+
+        'developer' => [
+            'dashboard.access.user',
+            'profile.view.own',
+            'profile.update.own',
+            'notifications.view.own',
+            'notifications.update.own',
+            'notifications.mark.read',
+
+            // Data Sources
+            'datasource.connect.source',
+            'datasource.introspect.source',
+            'datasource.preview.data',
+            'datasource.view.list',
+
+            // API Specs
+            'spec.generate.spec',
+            'spec.view.list',
+            'spec.view.detail',
         ],
 
         'user' => [

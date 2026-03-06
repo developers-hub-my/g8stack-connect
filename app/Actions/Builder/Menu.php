@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Builder;
 
 use App\Actions\Builder\Menu\AuditMonitoring;
+use App\Actions\Builder\Menu\DataManagement;
 use App\Actions\Builder\Menu\MediaManagement;
 use App\Actions\Builder\Menu\Settings;
 use App\Actions\Builder\Menu\Sidebar;
@@ -24,6 +25,7 @@ class Menu
     {
         $class = match ($builder) {
             'sidebar' => Sidebar::class,
+            'data-management' => DataManagement::class,
             'user-management' => UserManagement::class,
             'media-management' => MediaManagement::class,
             'settings' => Settings::class,

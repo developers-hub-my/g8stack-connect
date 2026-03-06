@@ -42,6 +42,7 @@ class AdminServiceProvider extends ServiceProvider
         $this->defineMonitoringGates();
         $this->defineMediaManagementGates();
         $this->defineProfileGates();
+        $this->defineDataManagementGates();
         $this->defineCompositeGates();
     }
 
@@ -168,6 +169,24 @@ class AdminServiceProvider extends ServiceProvider
 
         Gate::define('access.notifications', function (User $user) {
             return $user->can('notifications.view.own');
+        });
+    }
+
+    /**
+     * Define data management gates (data sources + API specs).
+     */
+    private function defineDataManagementGates(): void
+    {
+        Gate::define('access.data-management', function (User $user) {
+            return $user->can('datasource.view.list') || $user->can('spec.view.list');
+        });
+
+        Gate::define('manage.datasources', function (User $user) {
+            return $user->can('datasource.view.list');
+        });
+
+        Gate::define('manage.specs', function (User $user) {
+            return $user->can('spec.view.list');
         });
     }
 

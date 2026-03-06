@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **G8Connect** is a data-source-to-API platform that accelerates API development by auto-generating
-OpenAPI specs from any connected data source. Generated specs are submitted as **drafts** to
+OpenAPI specs from any connected data source. Generated specs are submitted to
 [G8Stack](https://g8stack.dev) for governance approval before deployment to Kong API Gateway.
 
-> **Core Principle**: Speed up creation, don't skip governance. G8Connect generates drafts — never
+> **Core Principle**: Speed up creation, don't skip governance. G8Connect generates specs — never
 > deploys directly. All exposure still requires approval through G8Stack's governance workflow.
 
 - **Framework**: Laravel 12+ with PHP 8.4+
@@ -391,9 +391,20 @@ class PostgresConnector implements DataSourceConnector { ... }
 class CsvConnector implements DataSourceConnector { ... }
 ```
 
+> **Gotcha:** `Schema::getTables()` returns tables from all schemas/databases the user can access.
+> Each driver uses `$table['schema']` differently:
+> - **MySQL/MSSQL**: `schema` = database name → filter by `getDatabaseName()`
+> - **PostgreSQL**: `schema` = schema name (e.g. `public`) → filter by connection `schema` config
+> - **SQLite**: `schema` = `main` → hardcode filter
+> This applies to both `AbstractDatabaseConnector::introspect()` and `DatabaseIntrospector::getTables()`.
+
 ---
 
 ## Livewire Patterns
+
+> **Gotcha:** Livewire 4 does not support the `rules()` method for dynamic validation.
+> Calling `$this->validate()` without rules throws `MissingRulesException`.
+> Always pass rules inline: `$this->validate($rules)`.
 
 ### Alerts and Confirmations
 
