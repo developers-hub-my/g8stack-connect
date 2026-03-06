@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Seeder;
+
+class PrepareSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $this->call(AccessControlSeeder::class);
+        $this->createSuperUser();
+    }
+
+    private function createSuperUser(): void
+    {
+        $user = User::create(config('seeder.users.superadmin'));
+        $user->assignRole('superadmin');
+        $user->assignRole('user');
+        $user->update(['email_verified_at' => now()]);
+    }
+}

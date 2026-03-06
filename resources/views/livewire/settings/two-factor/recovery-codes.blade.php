@@ -1,3 +1,50 @@
+<?php
+
+use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
+use Livewire\Attributes\Locked;
+use Livewire\Component;
+
+new class extends Component {
+    #[Locked]
+    public array $recoveryCodes = [];
+
+    /**
+     * Mount the component.
+     */
+    public function mount(): void
+    {
+        $this->loadRecoveryCodes();
+    }
+
+    /**
+     * Generate new recovery codes for the user.
+     */
+    public function regenerateRecoveryCodes(GenerateNewRecoveryCodes $generateNewRecoveryCodes): void
+    {
+        $generateNewRecoveryCodes(auth()->user());
+
+        $this->loadRecoveryCodes();
+    }
+
+    /**
+     * Load the recovery codes for the user.
+     */
+    private function loadRecoveryCodes(): void
+    {
+        $user = auth()->user();
+
+        if ($user->hasEnabledTwoFactorAuthentication() && $user->two_factor_recovery_codes) {
+            try {
+                $this->recoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true);
+            } catch (Exception) {
+                $this->addError('recoveryCodes', 'Failed to load recovery codes');
+
+                $this->recoveryCodes = [];
+            }
+        }
+    }
+}; ?>
+
 <div
     class="py-6 space-y-6 border shadow-sm rounded-xl border-zinc-200 dark:border-white/10"
     wire:cloak
@@ -6,7 +53,7 @@
     <div class="px-6 space-y-2">
         <div class="flex items-center gap-2">
             <flux:icon.lock-closed variant="outline" class="size-4"/>
-            <flux:heading size="lg" level="3">{{ __('2FA recovery codes') }}</flux:heading>
+            <flux:heading size="lg" level="3">{{ __('2FA Recovery Codes') }}</flux:heading>
         </div>
         <flux:text variant="subtle">
             {{ __('Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.') }}
@@ -24,7 +71,7 @@
                 aria-expanded="false"
                 aria-controls="recovery-codes-section"
             >
-                {{ __('View recovery codes') }}
+                {{ __('View Recovery Codes') }}
             </flux:button>
 
             <flux:button
@@ -36,7 +83,7 @@
                 aria-expanded="true"
                 aria-controls="recovery-codes-section"
             >
-                {{ __('Hide recovery codes') }}
+                {{ __('Hide Recovery Codes') }}
             </flux:button>
 
             @if (filled($recoveryCodes))
@@ -46,7 +93,7 @@
                     variant="filled"
                     wire:click="regenerateRecoveryCodes"
                 >
-                    {{ __('Regenerate codes') }}
+                    {{ __('Regenerate Codes') }}
                 </flux:button>
             @endif
         </div>
@@ -67,7 +114,7 @@
                     <div
                         class="grid gap-1 p-4 font-mono text-sm rounded-lg bg-zinc-100 dark:bg-white/5"
                         role="list"
-                        aria-label="{{ __('Recovery codes') }}"
+                        aria-label="Recovery codes"
                     >
                         @foreach($recoveryCodes as $code)
                             <div
@@ -80,7 +127,7 @@
                         @endforeach
                     </div>
                     <flux:text variant="subtle" class="text-xs">
-                        {{ __('Each recovery code can be used once to access your account and will be removed after use. If you need more, click Regenerate codes above.') }}
+                        {{ __('Each recovery code can be used once to access your account and will be removed after use. If you need more, click Regenerate Codes above.') }}
                     </flux:text>
                 @endif
             </div>

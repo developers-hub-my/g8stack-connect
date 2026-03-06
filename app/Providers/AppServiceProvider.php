@@ -1,50 +1,57 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\DB;
+use App\Settings\GeneralSettings;
+use App\Settings\MailSettings;
+use App\Settings\NotificationSettings;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-        //
-    }
+    public function register(): void {}
 
     /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
-        $this->configureDefaults();
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
+        $this->applyDatabaseSettings();
     }
 
     /**
-     * Configure default behaviors for production-ready applications.
+     * Override config values with Spatie Settings from the database.
      */
-    protected function configureDefaults(): void
+    private function applyDatabaseSettings(): void
     {
-        Date::use(CarbonImmutable::class);
+        try {
+            $general = app(GeneralSettings::class);
+            config(['app.name' => $general->site_name]);
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+            $mail = app(MailSettings::class);
+            config([
+                'mail.from.address' => $mail->from_address,
+                'mail.from.name' => $mail->from_name,
+            ]);
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
-        );
+            $notification = app(NotificationSettings::class);
+            config([
+                'notification.enabled' => $notification->enabled,
+                'notification.default' => $notification->channels,
+            ]);
+        } catch (\Throwable) {
+            // Settings table may not exist yet (fresh install, migrations pending).
+            // Silently fall back to .env / config defaults.
+        }
     }
 }

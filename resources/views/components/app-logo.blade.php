@@ -1,17 +1,16 @@
-@props([
-    'sidebar' => false,
-])
+<div class="flex items-center space-x-3 px-2">
+    {{-- Kickoff Logo --}}
+    <div class="flex-shrink-0">
+        <x-kickoff-logo class="h-10 w-10" />
+    </div>
 
-@if($sidebar)
-    <flux:sidebar.brand name="Laravel Starter Kit" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">
-            <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-        </x-slot>
-    </flux:sidebar.brand>
-@else
-    <flux:brand name="Laravel Starter Kit" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">
-            <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-        </x-slot>
-    </flux:brand>
-@endif
+    {{-- App Name --}}
+    <div class="flex flex-col">
+        <span class="text-base font-bold text-zinc-900 dark:text-white">
+            {{ config('app.name') }}
+        </span>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400">
+            Powered by Kickoff
+        </span>
+    </div>
+</div>
