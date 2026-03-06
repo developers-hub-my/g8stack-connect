@@ -12,7 +12,7 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 | v0.1 | Foundation | Auth + DB connections + Simple Mode | Internal / Dev | Done |
 | v0.2 | Guided Mode | Field selection, methods, filters, versioning | Beta | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
-| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Planned |
+| v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Done |
 | v0.3 | File Sources | CSV, JSON, Excel | Beta | Planned |
 | v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
 | v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
@@ -29,7 +29,7 @@ gantt
     v0.2 Guided Mode        :done, 2026-03-06, 2026-03-06
     v0.2.1 Dynamic Runtime  :done, 2026-03-06, 2026-03-06
   section Hardening
-    v0.2.2 Runtime Hardening :2026-03-07, 2026-03-20
+    v0.2.2 Runtime Hardening :done, 2026-03-06, 2026-03-06
   section Core Modes
     v0.3 File Sources       :2026-03-21, 2026-04-20
     v0.4 Advanced SQL Mode  :2026-04-21, 2026-05-20
