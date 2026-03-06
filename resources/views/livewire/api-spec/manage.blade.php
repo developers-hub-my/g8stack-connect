@@ -7,10 +7,10 @@
     </div>
 
     <form wire:submit="save">
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            {{-- LEFT: Resources (3/4 width) --}}
-            <div class="lg:col-span-3 space-y-6">
+            {{-- LEFT: Resources (2/3 width) --}}
+            <div class="lg:col-span-2 space-y-6">
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 space-y-4">
                     <div class="flex items-center justify-between">
                         <flux:heading size="lg">Resources</flux:heading>
@@ -37,25 +37,28 @@
                     @if(!empty($resources))
                         <div class="space-y-3">
                             @foreach($resources as $index => $resource)
-                                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
-                                    <div class="flex items-start justify-between mb-3">
-                                        <div class="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            <div>
-                                                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Database Table</label>
-                                                <p class="text-sm font-mono text-zinc-700 dark:text-zinc-300">{{ $resource['table_name'] }}</p>
-                                            </div>
-                                            <flux:input
-                                                wire:model="resources.{{ $index }}.resource_name"
-                                                label="API Resource Name"
-                                                placeholder="e.g. employees"
-                                                size="sm"
-                                            />
+                                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                                    {{-- Header: table info + remove --}}
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <span class="inline-flex items-center rounded-md bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300">
+                                                {{ $resource['table_name'] }}
+                                            </span>
+                                            <span class="text-zinc-400">&rarr;</span>
                                         </div>
-                                        <flux:button variant="ghost" size="sm" icon="x" wire:click="removeResource({{ $index }})" class="ml-2 mt-4" />
+                                        <flux:button variant="ghost" size="sm" icon="x" wire:click="removeResource({{ $index }})" />
                                     </div>
 
+                                    {{-- Resource name --}}
+                                    <flux:input
+                                        wire:model="resources.{{ $index }}.resource_name"
+                                        label="API Resource Name"
+                                        placeholder="e.g. employees"
+                                        size="sm"
+                                    />
+
                                     {{-- CRUD Toggles --}}
-                                    <div class="flex flex-wrap gap-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                                    <div class="flex flex-wrap gap-x-6 gap-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                                         <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 self-center">Operations:</label>
                                         <flux:checkbox wire:model="resources.{{ $index }}.operations.list" label="List" />
                                         <flux:checkbox wire:model="resources.{{ $index }}.operations.show" label="Show" />
