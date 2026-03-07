@@ -10,6 +10,7 @@ use App\Models\ApiSpec;
 use App\Models\ApiSpecTable;
 use App\Models\DataSource;
 use App\Services\ApiRuntime\ResourceNameSuggester;
+use App\Services\SpecGenerator\SpecRegenerationService;
 use Livewire\Component;
 
 class Manage extends Component
@@ -186,6 +187,11 @@ class Manage extends Component
 
         $this->syncResources();
 
+        app(SpecRegenerationService::class)->regenerate($this->apiSpec, [
+            'pagination' => $this->pagination,
+            'per_page' => $this->perPage,
+        ]);
+
         $this->alert('Success', $this->isEditing ? 'API spec updated.' : 'API spec created.');
 
         $this->redirect(route('api-specs.show', ['uuid' => $this->apiSpec->uuid]), navigate: true);
@@ -210,27 +216,18 @@ class Manage extends Component
         $existingIds = [];
 
         foreach ($this->resources as $index => $resource) {
-            if (! empty($resource['id'])) {
-                $table = ApiSpecTable::find($resource['id']);
-                if ($table) {
-                    $table->update([
-                        'table_name' => $resource['table_name'],
-                        'resource_name' => $resource['resource_name'],
-                        'operations' => $resource['operations'],
-                        'sort_order' => $index,
-                    ]);
-                    $existingIds[] = $table->id;
-                }
-            } else {
-                $table = ApiSpecTable::create([
+            $table = ApiSpecTable::updateOrCreate(
+                [
                     'api_spec_id' => $this->apiSpec->id,
                     'table_name' => $resource['table_name'],
+                ],
+                [
                     'resource_name' => $resource['resource_name'],
                     'operations' => $resource['operations'],
                     'sort_order' => $index,
-                ]);
-                $existingIds[] = $table->id;
-            }
+                ],
+            );
+            $existingIds[] = $table->id;
         }
 
         // Remove resources that were deleted

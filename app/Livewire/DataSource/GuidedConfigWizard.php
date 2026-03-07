@@ -10,7 +10,7 @@ use App\Models\ApiSpecField;
 use App\Models\ApiSpecTable;
 use App\Models\DataSourceSchema;
 use App\Services\PiiDetection\PiiDetectionService;
-use App\Services\SpecGenerator\GuidedSpecGenerator;
+use App\Services\SpecGenerator\SpecRegenerationService;
 use App\Services\SpecVersioning\SpecVersioningService;
 use Livewire\Component;
 
@@ -185,70 +185,31 @@ class GuidedConfigWizard extends Component
         }
 
         // Generate combined spec for ALL tables
-        $this->generateCombinedSpec($currentTable);
+        $spec = app(SpecRegenerationService::class)->regenerate($this->apiSpec, [
+            'pagination' => $this->pagination,
+            'per_page' => $this->perPage,
+        ]);
+
+        if (! empty($spec)) {
+            $allTables = $this->apiSpec->tables()->get();
+            $versioningService = new SpecVersioningService;
+            $versioningService->createVersion(
+                $this->apiSpec,
+                $spec,
+                [
+                    'tables' => collect($allTables)->map(fn ($t) => [
+                        'table_name' => $t->table_name,
+                        'resource_name' => $t->resource_name,
+                        'operations' => $t->operations,
+                    ])->all(),
+                    'pagination' => $this->pagination,
+                    'per_page' => $this->perPage,
+                ],
+                "Configuration updated for {$currentTable->resource_name}.",
+            );
+        }
 
         $this->alert('Success', "Configuration saved for {$currentTable->resource_name}.");
-    }
-
-    protected function generateCombinedSpec(ApiSpecTable $currentTable): void
-    {
-        $allTables = $this->apiSpec->tables()->with('fields')->get();
-        $schemas = [];
-        $configs = [];
-
-        foreach ($allTables as $table) {
-            $schema = DataSourceSchema::where('data_source_id', $this->apiSpec->data_source_id)
-                ->where('table_name', $table->table_name)
-                ->first();
-
-            if (! $schema) {
-                continue;
-            }
-
-            $fields = $table->fields->map(fn (ApiSpecField $f) => [
-                'column_name' => $f->column_name,
-                'display_name' => $f->display_name ?? $f->column_name,
-                'data_type' => $f->data_type,
-                'is_exposed' => $f->is_exposed,
-                'is_pii' => $f->is_pii,
-                'is_required' => $f->is_required,
-                'is_filterable' => $f->is_filterable,
-                'is_sortable' => $f->is_sortable,
-                'sort_order' => $f->sort_order,
-            ])->all();
-
-            $schemas[] = $schema;
-            $configs[] = [
-                'fields' => $fields,
-                'operations' => $table->operations ?? $table->getDefaultOperations(),
-                'resource_name' => $table->resource_name,
-                'pagination' => $this->pagination,
-                'per_page' => $this->perPage,
-            ];
-        }
-
-        if (empty($schemas)) {
-            return;
-        }
-
-        $generator = new GuidedSpecGenerator;
-        $spec = $generator->generateForTables($schemas, $configs);
-
-        $versioningService = new SpecVersioningService;
-        $versioningService->createVersion(
-            $this->apiSpec,
-            $spec,
-            [
-                'tables' => collect($allTables)->map(fn ($t) => [
-                    'table_name' => $t->table_name,
-                    'resource_name' => $t->resource_name,
-                    'operations' => $t->operations,
-                ])->all(),
-                'pagination' => $this->pagination,
-                'per_page' => $this->perPage,
-            ],
-            "Configuration updated for {$currentTable->resource_name}.",
-        );
     }
 
     public function render(): \Illuminate\View\View
