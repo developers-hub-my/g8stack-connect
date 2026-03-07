@@ -1,0 +1,16 @@
+id,name,email,department,position,salary,join_date,is_active
+1,Ahmad Razali,ahmad.razali@example.com,Engineering,Senior Developer,8500.00,2020-03-15,true
+2,Siti Aminah,siti.aminah@example.com,Marketing,Marketing Manager,7800.00,2019-07-01,true
+3,Muhammad Faiz,muhammad.faiz@example.com,Engineering,Junior Developer,5200.00,2022-01-10,true
+4,Nurul Huda,nurul.huda@example.com,Finance,Accountant,6500.00,2021-05-20,true
+5,Tan Wei Ming,tan.weiming@example.com,Engineering,Tech Lead,9500.00,2018-11-03,true
+6,Priya Nair,priya.nair@example.com,HR,HR Executive,5800.00,2021-09-15,true
+7,Lim Chee Keong,lim.ck@example.com,Sales,Sales Executive,6000.00,2022-06-01,false
+8,Fatimah Zahra,fatimah.z@example.com,Engineering,DevOps Engineer,8000.00,2020-08-22,true
+9,Raj Kumar,raj.kumar@example.com,Finance,Finance Manager,9000.00,2017-04-10,true
+10,Aisha Binti Omar,aisha.omar@example.com,Marketing,Content Writer,4800.00,2023-02-14,true
+11,Wong Siew Leng,wong.sl@example.com,Sales,Sales Manager,8200.00,2019-01-08,true
+12,Hafiz Rahman,hafiz.r@example.com,Engineering,QA Engineer,6200.00,2021-11-30,true
+13,Kavitha Devi,kavitha.d@example.com,HR,HR Manager,8500.00,2018-06-15,true
+14,Mohd Azlan,mohd.azlan@example.com,Engineering,Frontend Developer,6800.00,2022-04-01,true
+15,Lee Mei Ling,lee.ml@example.com,Finance,Financial Analyst,7200.00,2020-10-12,false

@@ -1,0 +1,88 @@
+{
+  "data": [
+    {
+      "id": "sensor-001",
+      "location": "Kuala Lumpur",
+      "type": "temperature",
+      "value": 32.5,
+      "unit": "celsius",
+      "timestamp": "2025-01-15T10:30:00+08:00",
+      "battery_level": 85,
+      "is_online": true
+    },
+    {
+      "id": "sensor-002",
+      "location": "Penang",
+      "type": "humidity",
+      "value": 78.2,
+      "unit": "percent",
+      "timestamp": "2025-01-15T10:31:00+08:00",
+      "battery_level": 92,
+      "is_online": true
+    },
+    {
+      "id": "sensor-003",
+      "location": "Johor Bahru",
+      "type": "temperature",
+      "value": 31.8,
+      "unit": "celsius",
+      "timestamp": "2025-01-15T10:32:00+08:00",
+      "battery_level": 45,
+      "is_online": true
+    },
+    {
+      "id": "sensor-004",
+      "location": "Kota Kinabalu",
+      "type": "air_quality",
+      "value": 52,
+      "unit": "aqi",
+      "timestamp": "2025-01-15T10:33:00+08:00",
+      "battery_level": 12,
+      "is_online": false
+    },
+    {
+      "id": "sensor-005",
+      "location": "Kuching",
+      "type": "temperature",
+      "value": 29.4,
+      "unit": "celsius",
+      "timestamp": "2025-01-15T10:34:00+08:00",
+      "battery_level": 67,
+      "is_online": true
+    },
+    {
+      "id": "sensor-006",
+      "location": "Ipoh",
+      "type": "humidity",
+      "value": 82.1,
+      "unit": "percent",
+      "timestamp": "2025-01-15T10:35:00+08:00",
+      "battery_level": 73,
+      "is_online": true
+    },
+    {
+      "id": "sensor-007",
+      "location": "Melaka",
+      "type": "air_quality",
+      "value": 38,
+      "unit": "aqi",
+      "timestamp": "2025-01-15T10:36:00+08:00",
+      "battery_level": 88,
+      "is_online": true
+    },
+    {
+      "id": "sensor-008",
+      "location": "Shah Alam",
+      "type": "temperature",
+      "value": 33.1,
+      "unit": "celsius",
+      "timestamp": "2025-01-15T10:37:00+08:00",
+      "battery_level": 55,
+      "is_online": true
+    }
+  ],
+  "meta": {
+    "total": 8,
+    "retrieved_at": "2025-01-15T10:40:00+08:00"
+  }
+}

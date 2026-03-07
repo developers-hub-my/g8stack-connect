@@ -1,0 +1,98 @@
+[
+  {
+    "student_id": "STU-2024-001",
+    "full_name": "Aisyah Binti Razak",
+    "ic_number": "040515-14-1234",
+    "program": "Bachelor of Computer Science",
+    "faculty": "Faculty of Computing",
+    "semester": 5,
+    "cgpa": 3.65,
+    "enrollment_date": "2022-09-01",
+    "status": "active",
+    "phone": "012-3456789"
+  },
+  {
+    "student_id": "STU-2024-002",
+    "full_name": "Danial Hakim",
+    "ic_number": "030822-10-5678",
+    "program": "Bachelor of Software Engineering",
+    "faculty": "Faculty of Computing",
+    "semester": 3,
+    "cgpa": 3.42,
+    "enrollment_date": "2023-09-01",
+    "status": "active",
+    "phone": "013-9876543"
+  },
+  {
+    "student_id": "STU-2024-003",
+    "full_name": "Chong Mei Ying",
+    "ic_number": "041201-08-9012",
+    "program": "Bachelor of Data Science",
+    "faculty": "Faculty of Computing",
+    "semester": 5,
+    "cgpa": 3.88,
+    "enrollment_date": "2022-09-01",
+    "status": "active",
+    "phone": "011-2345678"
+  },
+  {
+    "student_id": "STU-2024-004",
+    "full_name": "Arjun Krishnan",
+    "ic_number": "040330-07-3456",
+    "program": "Bachelor of Information Technology",
+    "faculty": "Faculty of Computing",
+    "semester": 7,
+    "cgpa": 3.15,
+    "enrollment_date": "2021-09-01",
+    "status": "active",
+    "phone": "019-8765432"
+  },
+  {
+    "student_id": "STU-2024-005",
+    "full_name": "Nurul Izzah",
+    "ic_number": "050110-01-7890",
+    "program": "Bachelor of Computer Science",
+    "faculty": "Faculty of Computing",
+    "semester": 1,
+    "cgpa": 0.00,
+    "enrollment_date": "2025-02-01",
+    "status": "active",
+    "phone": "017-1234567"
+  },
+  {
+    "student_id": "STU-2024-006",
+    "full_name": "Lee Jun Wei",
+    "ic_number": "030715-11-2345",
+    "program": "Bachelor of Software Engineering",
+    "faculty": "Faculty of Computing",
+    "semester": 5,
+    "cgpa": 2.98,
+    "enrollment_date": "2022-09-01",
+    "status": "probation",
+    "phone": "016-5432109"
+  },
+  {
+    "student_id": "STU-2024-007",
+    "full_name": "Farah Diana",
+    "ic_number": "040928-03-6789",
+    "program": "Bachelor of Data Science",
+    "faculty": "Faculty of Computing",
+    "semester": 3,
+    "cgpa": 3.72,
+    "enrollment_date": "2023-09-01",
+    "status": "active",
+    "phone": "018-6789012"
+  },
+  {
+    "student_id": "STU-2024-008",
+    "full_name": "Sivakumar Raman",
+    "ic_number": "031105-04-0123",
+    "program": "Bachelor of Information Technology",
+    "faculty": "Faculty of Computing",
+    "semester": 5,
+    "cgpa": 3.33,
+    "enrollment_date": "2022-09-01",
+    "status": "active",
+    "phone": "014-3210987"
+  }
+]

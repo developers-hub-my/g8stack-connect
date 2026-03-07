@@ -1,0 +1,112 @@
+[
+  {
+    "id": 1,
+    "name": "Ahmad Razali",
+    "email": "ahmad.razali@example.com",
+    "department": "Engineering",
+    "position": "Senior Developer",
+    "salary": 8500.00,
+    "join_date": "2020-03-15",
+    "is_active": true,
+    "skills": ["PHP", "Laravel", "Vue.js"]
+  },
+  {
+    "id": 2,
+    "name": "Siti Aminah",
+    "email": "siti.aminah@example.com",
+    "department": "Marketing",
+    "position": "Marketing Manager",
+    "salary": 7800.00,
+    "join_date": "2019-07-01",
+    "is_active": true,
+    "skills": ["SEO", "Content Marketing", "Analytics"]
+  },
+  {
+    "id": 3,
+    "name": "Muhammad Faiz",
+    "email": "muhammad.faiz@example.com",
+    "department": "Engineering",
+    "position": "Junior Developer",
+    "salary": 5200.00,
+    "join_date": "2022-01-10",
+    "is_active": true,
+    "skills": ["JavaScript", "React"]
+  },
+  {
+    "id": 4,
+    "name": "Nurul Huda",
+    "email": "nurul.huda@example.com",
+    "department": "Finance",
+    "position": "Accountant",
+    "salary": 6500.00,
+    "join_date": "2021-05-20",
+    "is_active": true,
+    "skills": ["Excel", "SAP", "Financial Reporting"]
+  },
+  {
+    "id": 5,
+    "name": "Tan Wei Ming",
+    "email": "tan.weiming@example.com",
+    "department": "Engineering",
+    "position": "Tech Lead",
+    "salary": 9500.00,
+    "join_date": "2018-11-03",
+    "is_active": true,
+    "skills": ["Python", "AWS", "Docker", "Kubernetes"]
+  },
+  {
+    "id": 6,
+    "name": "Priya Nair",
+    "email": "priya.nair@example.com",
+    "department": "HR",
+    "position": "HR Executive",
+    "salary": 5800.00,
+    "join_date": "2021-09-15",
+    "is_active": true,
+    "skills": ["Recruitment", "HRIS"]
+  },
+  {
+    "id": 7,
+    "name": "Lim Chee Keong",
+    "email": "lim.ck@example.com",
+    "department": "Sales",
+    "position": "Sales Executive",
+    "salary": 6000.00,
+    "join_date": "2022-06-01",
+    "is_active": false,
+    "skills": ["CRM", "Negotiation"]
+  },
+  {
+    "id": 8,
+    "name": "Fatimah Zahra",
+    "email": "fatimah.z@example.com",
+    "department": "Engineering",
+    "position": "DevOps Engineer",
+    "salary": 8000.00,
+    "join_date": "2020-08-22",
+    "is_active": true,
+    "skills": ["CI/CD", "Terraform", "Linux"]
+  },
+  {
+    "id": 9,
+    "name": "Raj Kumar",
+    "email": "raj.kumar@example.com",
+    "department": "Finance",
+    "position": "Finance Manager",
+    "salary": 9000.00,
+    "join_date": "2017-04-10",
+    "is_active": true,
+    "skills": ["Budgeting", "Audit", "Financial Planning"]
+  },
+  {
+    "id": 10,
+    "name": "Aisha Binti Omar",
+    "email": "aisha.omar@example.com",
+    "department": "Marketing",
+    "position": "Content Writer",
+    "salary": 4800.00,
+    "join_date": "2023-02-14",
+    "is_active": true,
+    "skills": ["Copywriting", "Social Media"]
+  }
+]

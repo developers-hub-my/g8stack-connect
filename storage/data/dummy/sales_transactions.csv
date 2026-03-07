@@ -1,0 +1,16 @@
+transaction_id,customer_name,product_id,quantity,unit_price,total_amount,payment_method,transaction_date,status
+TXN-001,Ahmad bin Ali,1,3,12.90,38.70,fpx,2025-01-15 10:30:00,completed
+TXN-002,Sarah Lee,3,1,89.90,89.90,credit_card,2025-01-15 11:45:00,completed
+TXN-003,Muthu Rajan,5,5,8.50,42.50,ewallet,2025-01-16 09:15:00,completed
+TXN-004,Noraini Yusof,10,2,18.90,37.80,fpx,2025-01-16 14:20:00,completed
+TXN-005,James Tan,8,1,120.00,120.00,credit_card,2025-01-17 16:00:00,refunded
+TXN-006,Fatimah Hassan,2,10,15.50,155.00,cash,2025-01-18 08:30:00,completed
+TXN-007,Lim Boon Keat,7,4,9.90,39.60,ewallet,2025-01-18 12:00:00,completed
+TXN-008,Aishah Kamal,9,1,159.00,159.00,credit_card,2025-01-19 15:30:00,pending
+TXN-009,Raj Segaran,4,3,22.00,66.00,fpx,2025-01-20 10:00:00,completed
+TXN-010,Wong Mei Hua,12,2,45.00,90.00,ewallet,2025-01-20 11:30:00,completed
+TXN-011,Halim Osman,1,5,12.90,64.50,cash,2025-01-21 09:00:00,completed
+TXN-012,Priya Sundram,6,1,35.00,35.00,ewallet,2025-01-21 13:45:00,completed
+TXN-013,Chen Wei Lin,11,8,6.50,52.00,fpx,2025-01-22 10:15:00,completed
+TXN-014,Zainab Idris,2,6,15.50,93.00,credit_card,2025-01-22 16:30:00,cancelled
+TXN-015,Kumar Pillai,5,10,8.50,85.00,cash,2025-01-23 08:00:00,completed

@@ -1,0 +1,13 @@
+product_id,product_name,category,sku,price,stock_quantity,weight_kg,supplier,created_at
+1,Nasi Lemak Frozen Pack,Food,FD-NL-001,12.90,500,0.35,Dapur Mak Cik Sdn Bhd,2024-01-15
+2,Teh Tarik Instant 3-in-1,Beverages,BV-TT-001,15.50,1200,0.45,Warung Kopi Industries,2024-02-01
+3,Batik Shirt Premium,Apparel,AP-BS-001,89.90,150,0.25,Kraftangan Malaysia,2024-01-20
+4,Kopi O Powder 500g,Beverages,BV-KO-001,22.00,800,0.50,Warung Kopi Industries,2024-03-01
+5,Sambal Belacan Paste,Food,FD-SB-001,8.50,2000,0.20,Dapur Mak Cik Sdn Bhd,2024-01-10
+6,Songkok Black Traditional,Apparel,AP-SK-001,35.00,300,0.15,Kraftangan Malaysia,2024-02-15
+7,Roti Canai Frozen 10pcs,Food,FD-RC-001,9.90,750,0.80,Mamak Express Sdn Bhd,2024-03-10
+8,Durian Musang King 1kg,Food,FD-DM-001,120.00,50,1.00,Royal Durian Farm,2024-06-01
+9,Baju Kurung Modern,Apparel,AP-BK-001,159.00,200,0.40,Kraftangan Malaysia,2024-04-01
+10,Milo 3-in-1 Box,Beverages,BV-ML-001,18.90,3000,0.60,Nestle Malaysia,2024-01-05
+11,Keropok Lekor Frozen,Food,FD-KL-001,6.50,1500,0.30,Terengganu Snacks Co,2024-02-20
+12,Tudung Bawal Premium,Apparel,AP-TB-001,45.00,400,0.10,Naelofar Hijab,2024-03-15
