@@ -46,6 +46,8 @@ class ApiSpec extends Model
             'openapi_spec' => 'array',
             'selected_tables' => 'array',
             'configuration' => 'array',
+            'sql_parameters' => 'array',
+            'result_columns' => 'array',
         ];
     }
 
@@ -72,6 +74,11 @@ class ApiSpec extends Model
     public function keys(): HasMany
     {
         return $this->hasMany(ApiSpecKey::class);
+    }
+
+    public function isAdvancedMode(): bool
+    {
+        return $this->wizard_mode === WizardMode::ADVANCED;
     }
 
     public function isGrouped(): bool

@@ -13,6 +13,7 @@ use App\Services\ApiRuntime\ApiQueryService;
 use App\Services\ApiRuntime\ApiRequestLogger;
 use App\Services\ApiRuntime\ApiResponseTransformer;
 use App\Services\ApiRuntime\ApiValidationService;
+use App\Services\ApiRuntime\SqlQueryExecutor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,7 @@ class DynamicApiController extends Controller
         protected ApiValidationService $validator,
         protected ApiHeaderService $headerService,
         protected ApiRequestLogger $logger,
+        protected SqlQueryExecutor $sqlExecutor,
     ) {}
 
     public function resources(Request $request, string $slug): JsonResponse
@@ -32,6 +34,30 @@ class DynamicApiController extends Controller
         $startTime = microtime(true);
         $spec = $this->resolveSpec($slug);
         $request->attributes->set('api_spec', $spec);
+
+        // SQL-based spec: show endpoint info
+        if ($spec->isAdvancedMode() && $spec->endpoint_name) {
+            $response = response()->json([
+                'data' => [
+                    [
+                        'name' => $spec->endpoint_name,
+                        'type' => 'query',
+                        'operations' => ['list' => true],
+                        'parameters' => $spec->sql_parameters ?? [],
+                    ],
+                ],
+                'meta' => [
+                    'spec' => $spec->name,
+                    'slug' => $spec->slug,
+                    'mode' => 'advanced',
+                    'total_resources' => 1,
+                ],
+            ]);
+
+            $this->logger->log($request, $spec, $request->attributes->get('api_spec_key'), 200, $startTime);
+
+            return $this->headerService->apply($response, $spec, $startTime);
+        }
 
         $tables = $spec->tables()->get();
 
@@ -65,6 +91,12 @@ class DynamicApiController extends Controller
         $startTime = microtime(true);
         $spec = $this->resolveSpec($slug);
         $request->attributes->set('api_spec', $spec);
+
+        // SQL-based endpoint: execute query instead of table lookup
+        if ($spec->isAdvancedMode() && $spec->endpoint_name === $resource) {
+            return $this->executeSqlEndpoint($spec, $request, $startTime, $resource);
+        }
+
         $table = $this->resolveTable($spec, $resource);
         $this->ensureOperationAllowed($table, 'list');
 
@@ -153,6 +185,29 @@ class DynamicApiController extends Controller
         }
 
         return $this->respond(null, $spec, $request, $startTime, $resource, 204);
+    }
+
+    protected function executeSqlEndpoint(
+        ApiSpec $spec,
+        Request $request,
+        float $startTime,
+        string $resource,
+    ): JsonResponse {
+        try {
+            $result = $this->sqlExecutor->execute($spec, $request);
+
+            return $this->respond($result, $spec, $request, $startTime, $resource);
+        } catch (\InvalidArgumentException $e) {
+            return $this->respondError($e->getMessage(), 400, $spec, $request, $startTime, $resource);
+        } catch (\RuntimeException $e) {
+            $message = str_contains($e->getMessage(), 'timeout')
+                ? 'Query timeout exceeded (10 second limit).'
+                : 'Query execution failed.';
+
+            $status = str_contains($e->getMessage(), 'timeout') ? 408 : 422;
+
+            return $this->respondError($message, $status, $spec, $request, $startTime, $resource);
+        }
     }
 
     protected function resolveSpec(string $slug): ApiSpec
