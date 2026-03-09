@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\ApiRuntime;
 
 use App\Models\ApiSpec;
+use App\Models\ApiSpecTable;
 use App\Services\SqlValidator;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
@@ -29,10 +30,10 @@ class SqlQueryExecutor
     /**
      * Execute an SQL query endpoint and return paginated results.
      */
-    public function execute(ApiSpec $spec, Request $request): array
+    public function execute(ApiSpec $spec, ApiSpecTable $table, Request $request): array
     {
-        $sql = $spec->sql_query;
-        $parameters = $spec->sql_parameters ?? [];
+        $sql = $table->sql_query;
+        $parameters = $table->sql_parameters ?? [];
 
         // Validate the SQL (should already be validated, but enforce at runtime too)
         $validation = $this->validator->validate($sql);

@@ -6,6 +6,8 @@ namespace App\Services\SpecGenerator;
 
 use App\Contracts\PiiScanner;
 use App\Models\ApiSpec;
+use App\Models\ApiSpecTable;
+use Illuminate\Support\Collection;
 
 class SqlSpecGenerator
 {
@@ -14,7 +16,7 @@ class SqlSpecGenerator
     ) {}
 
     /**
-     * Generate an OpenAPI spec from an SQL query's result columns.
+     * Generate an OpenAPI spec from a single SQL query's result columns.
      *
      * @param  array{endpoint_name: string, result_columns: array, parameters: array, description?: string}  $config
      */
@@ -61,6 +63,70 @@ class SqlSpecGenerator
                         'properties' => $properties,
                     ],
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * Generate a combined OpenAPI spec from multiple SQL query tables.
+     *
+     * @param  Collection<int, ApiSpecTable>  $tables
+     */
+    public function generateForTables(ApiSpec $spec, Collection $tables): array
+    {
+        $paths = [];
+        $schemas = [];
+
+        foreach ($tables as $table) {
+            if (! $table->isSqlQuery()) {
+                continue;
+            }
+
+            $endpointName = $table->resource_name;
+            $resultColumns = $table->result_columns ?? [];
+            $parameters = $table->sql_parameters ?? [];
+
+            $modelName = str($endpointName)->studly()->toString();
+
+            // PII scan on result column names
+            $columnNames = collect($resultColumns)->pluck('name')->all();
+            $piiResult = $this->piiScanner->scan($columnNames);
+
+            $safeColumns = collect($resultColumns)->filter(
+                fn ($col) => ! in_array($col['name'], $piiResult->flagged)
+            )->values()->all();
+
+            $properties = $this->buildSchemaProperties($safeColumns);
+            $basePath = "/api/connect/{$spec->slug}/{$endpointName}";
+
+            $paths[$basePath] = [
+                'get' => $this->buildGetEndpoint(
+                    $modelName,
+                    $endpointName,
+                    $properties,
+                    $parameters,
+                    "Custom SQL query endpoint: {$endpointName}",
+                ),
+            ];
+
+            $schemas[$modelName] = [
+                'type' => 'object',
+                'properties' => $properties,
+            ];
+        }
+
+        return [
+            'openapi' => '3.1.0',
+            'info' => [
+                'title' => $spec->name,
+                'version' => '1.0.0',
+                'description' => "Advanced SQL query endpoints for {$spec->name}",
+                'x-generator' => 'G8Connect',
+                'x-query-mode' => 'advanced',
+            ],
+            'paths' => $paths,
+            'components' => [
+                'schemas' => $schemas,
             ],
         ];
     }

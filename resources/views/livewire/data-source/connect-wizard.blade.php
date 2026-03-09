@@ -229,79 +229,140 @@
     {{-- Step 5: Schema Preview (Simple/Guided) or SQL Editor (Advanced) --}}
     @if($currentStep === 5)
         @if($wizardMode === 'advanced')
-            {{-- Advanced Mode: SQL Editor --}}
+            {{-- Advanced Mode: Multi-Query SQL Editor --}}
             <div class="space-y-5">
-                <div>
-                    <flux:heading size="lg">SQL Query Editor</flux:heading>
-                    <flux:text class="mt-1">Write a SELECT query. Only SELECT and WITH (CTE) statements are allowed.</flux:text>
-                </div>
-
-                <flux:input wire:model="endpointName" label="Endpoint Name" placeholder="e.g. active-employees, sales-summary" description="URL-safe name for the GET endpoint. Use lowercase with hyphens." />
-
-                <div>
-                    <label class="block text-sm font-medium text-zinc-900 dark:text-white mb-2">SQL Query</label>
-                    <textarea wire:model.live.debounce.500ms="sqlQuery"
-                        rows="10"
-                        placeholder="SELECT e.name, e.email, d.name AS department&#10;FROM employees e&#10;JOIN departments d ON e.dept_id = d.id&#10;WHERE d.active = :active"
-                        class="block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 font-mono text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-blue-500 focus:ring-blue-500"></textarea>
-
-                    @error('sqlQuery') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-
-                @if(!empty($sqlValidationErrors))
-                    <div class="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Validation Errors</h3>
-                        <ul class="mt-2 list-disc list-inside text-sm text-red-700 dark:text-red-300">
-                            @foreach($sqlValidationErrors as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+                <div class="flex items-end justify-between">
+                    <div>
+                        <flux:heading size="lg">SQL Query Endpoints</flux:heading>
+                        <flux:text class="mt-1">Define one or more SELECT queries. Each becomes a GET endpoint.</flux:text>
                     </div>
-                @endif
-
-                @if($sqlValidated && !empty($sqlResultColumns))
-                    <div class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
-                        <h3 class="text-sm font-medium text-green-800 dark:text-green-200">Query Validated</h3>
-                        <p class="mt-1 text-sm text-green-700 dark:text-green-300">{{ count($sqlResultColumns) }} result columns detected.</p>
-
-                        <div class="mt-3">
-                            <table class="min-w-full divide-y divide-green-200 dark:divide-green-800">
-                                <thead>
-                                    <tr>
-                                        <th class="py-2 pr-3 text-left text-xs font-semibold text-green-800 dark:text-green-200">Column</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold text-green-800 dark:text-green-200">Type</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-green-100 dark:divide-green-900">
-                                    @foreach($sqlResultColumns as $col)
-                                        <tr>
-                                            <td class="py-2 pr-3 text-sm font-mono text-green-900 dark:text-green-100">{{ $col['name'] }}</td>
-                                            <td class="px-3 py-2 text-sm text-green-700 dark:text-green-300">{{ $col['type'] }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        @if(!empty($sqlParameters))
-                            <div class="mt-3">
-                                <p class="text-xs font-medium text-green-800 dark:text-green-200">Parameters:</p>
-                                <div class="mt-1 flex flex-wrap gap-1">
-                                    @foreach($sqlParameters as $param)
-                                        <flux:badge color="green" size="sm">:{{ $param }}</flux:badge>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @endif
-
-                <div class="flex items-center gap-3">
-                    <flux:button wire:click="validateSql" variant="filled" size="sm">
-                        Validate & Test Query
+                    <flux:button wire:click="addSqlQuery" variant="ghost" size="sm">
+                        + Add Query
                     </flux:button>
-                    <p class="text-xs text-zinc-500 dark:text-zinc-400">Runs a dry-run with LIMIT 1 to verify the query shape.</p>
                 </div>
+
+                {{-- Query Tabs --}}
+                @if(count($sqlQueries) > 1)
+                    <div class="flex flex-wrap items-center gap-1 border-b border-zinc-200 dark:border-zinc-700">
+                        @foreach($sqlQueries as $i => $q)
+                            <div class="flex items-center gap-1 rounded-t-lg px-3 py-2 -mb-px
+                                {{ $activeSqlIndex === $i ? 'bg-white dark:bg-zinc-800 border border-b-white dark:border-b-zinc-800 border-zinc-200 dark:border-zinc-700' : '' }}">
+                                <button type="button" wire:click="setActiveSqlIndex({{ $i }})"
+                                    class="flex items-center gap-2 text-sm cursor-pointer
+                                        {{ $activeSqlIndex === $i ? 'font-medium text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}">
+                                    <span>{{ !empty($q['endpoint_name']) ? $q['endpoint_name'] : 'Query '.($i + 1) }}</span>
+                                    @if($q['validated'])
+                                        <span class="inline-block h-2 w-2 rounded-full bg-green-500"></span>
+                                    @elseif(!empty($q['validation_errors']))
+                                        <span class="inline-block h-2 w-2 rounded-full bg-red-500"></span>
+                                    @endif
+                                </button>
+                                @if(count($sqlQueries) > 1)
+                                    <button type="button" wire:click="removeSqlQuery({{ $i }})" wire:confirm="Remove this query?"
+                                        class="p-0.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer">
+                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Active Query Editor --}}
+                @if(isset($sqlQueries[$activeSqlIndex]))
+                    @php $activeQuery = $sqlQueries[$activeSqlIndex]; @endphp
+                    <div wire:key="sql-editor-{{ $activeSqlIndex }}" class="space-y-4">
+
+                    <flux:input wire:model="sqlQueries.{{ $activeSqlIndex }}.endpoint_name" label="Endpoint Name" placeholder="e.g. active-employees, sales-summary" description="URL-safe name for the GET endpoint. Use lowercase with hyphens." />
+
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-900 dark:text-white mb-2">SQL Query</label>
+                        <textarea wire:model="sqlQueries.{{ $activeSqlIndex }}.sql_query"
+                            rows="8"
+                            placeholder="SELECT e.name, e.email, d.name AS department&#10;FROM employees e&#10;JOIN departments d ON e.dept_id = d.id&#10;WHERE d.active = :active"
+                            class="block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 font-mono text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    @if(!empty($activeQuery['validation_errors']))
+                        <div class="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Validation Errors</h3>
+                            <ul class="mt-2 list-disc list-inside text-sm text-red-700 dark:text-red-300">
+                                @foreach($activeQuery['validation_errors'] as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    @if($activeQuery['validated'] && !empty($activeQuery['result_columns']))
+                        <div class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+                            <h3 class="text-sm font-medium text-green-800 dark:text-green-200">Query Validated</h3>
+                            <p class="mt-1 text-sm text-green-700 dark:text-green-300">{{ count($activeQuery['result_columns']) }} result columns detected.</p>
+
+                            <div class="mt-3">
+                                <table class="min-w-full divide-y divide-green-200 dark:divide-green-800">
+                                    <thead>
+                                        <tr>
+                                            <th class="py-2 pr-3 text-left text-xs font-semibold text-green-800 dark:text-green-200">Column</th>
+                                            <th class="px-3 py-2 text-left text-xs font-semibold text-green-800 dark:text-green-200">Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-green-100 dark:divide-green-900">
+                                        @foreach($activeQuery['result_columns'] as $col)
+                                            <tr>
+                                                <td class="py-2 pr-3 text-sm font-mono text-green-900 dark:text-green-100">{{ $col['name'] }}</td>
+                                                <td class="px-3 py-2 text-sm text-green-700 dark:text-green-300">{{ $col['type'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @if(!empty($activeQuery['parameters']))
+                                <div class="mt-3">
+                                    <p class="text-xs font-medium text-green-800 dark:text-green-200">Parameters:</p>
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        @foreach($activeQuery['parameters'] as $param)
+                                            <flux:badge color="green" size="sm">:{{ $param }}</flux:badge>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    <div class="flex items-center gap-3">
+                        <flux:button wire:click="validateSql({{ $activeSqlIndex }})" variant="filled" size="sm">
+                            Validate & Test Query
+                        </flux:button>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Runs a dry-run with LIMIT 1 to verify the query shape.</p>
+                    </div>
+                    </div>{{-- end wire:key sql-editor --}}
+                @endif
+
+                {{-- Validation summary for all queries --}}
+                @if(count($sqlQueries) > 1)
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+                        <h3 class="text-sm font-medium text-zinc-900 dark:text-white mb-2">Endpoints Summary</h3>
+                        <div class="space-y-1">
+                            @foreach($sqlQueries as $i => $q)
+                                <div class="flex items-center gap-2 text-sm">
+                                    @if($q['validated'])
+                                        <span class="inline-block h-2 w-2 rounded-full bg-green-500"></span>
+                                    @elseif(!empty($q['validation_errors']))
+                                        <span class="inline-block h-2 w-2 rounded-full bg-red-500"></span>
+                                    @else
+                                        <span class="inline-block h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
+                                    @endif
+                                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ !empty($q['endpoint_name']) ? $q['endpoint_name'] : 'Query '.($i + 1) }}</span>
+                                    <span class="text-xs text-zinc-500">
+                                        {{ $q['validated'] ? 'Validated' : (!empty($q['validation_errors']) ? 'Error' : 'Not validated') }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Available tables reference --}}
                 @if(count($tables) > 0)
@@ -434,8 +495,8 @@
                     Next
                 </flux:button>
             @elseif($currentStep === 5 && $wizardMode === 'advanced')
-                {{-- Advanced mode: only allow Next if SQL is validated --}}
-                @if($sqlValidated)
+                {{-- Advanced mode: only allow Next if all SQL queries are validated --}}
+                @if($this->allSqlQueriesValidated())
                     <flux:button wire:click="nextStep" variant="primary">
                         Next
                     </flux:button>

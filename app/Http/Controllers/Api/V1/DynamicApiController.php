@@ -35,30 +35,6 @@ class DynamicApiController extends Controller
         $spec = $this->resolveSpec($slug);
         $request->attributes->set('api_spec', $spec);
 
-        // SQL-based spec: show endpoint info
-        if ($spec->isAdvancedMode() && $spec->endpoint_name) {
-            $response = response()->json([
-                'data' => [
-                    [
-                        'name' => $spec->endpoint_name,
-                        'type' => 'query',
-                        'operations' => ['list' => true],
-                        'parameters' => $spec->sql_parameters ?? [],
-                    ],
-                ],
-                'meta' => [
-                    'spec' => $spec->name,
-                    'slug' => $spec->slug,
-                    'mode' => 'advanced',
-                    'total_resources' => 1,
-                ],
-            ]);
-
-            $this->logger->log($request, $spec, $request->attributes->get('api_spec_key'), 200, $startTime);
-
-            return $this->headerService->apply($response, $spec, $startTime);
-        }
-
         $tables = $spec->tables()->get();
 
         if ($tables->isEmpty()) {
@@ -67,10 +43,20 @@ class DynamicApiController extends Controller
             return $this->respond($result, $spec, $request, $startTime);
         }
 
-        $resources = $tables->map(fn (ApiSpecTable $table) => [
-            'name' => $table->resource_name,
-            'operations' => $table->operations ?? $table->getDefaultOperations(),
-        ])->values()->all();
+        $resources = $tables->map(function (ApiSpecTable $table) {
+            $entry = [
+                'name' => $table->resource_name,
+                'operations' => $table->operations ?? $table->getDefaultOperations(),
+            ];
+
+            if ($table->isSqlQuery()) {
+                $entry['type'] = 'query';
+                $entry['operations'] = ['list' => true];
+                $entry['parameters'] = $table->sql_parameters ?? [];
+            }
+
+            return $entry;
+        })->values()->all();
 
         $response = response()->json([
             'data' => $resources,
@@ -92,12 +78,13 @@ class DynamicApiController extends Controller
         $spec = $this->resolveSpec($slug);
         $request->attributes->set('api_spec', $spec);
 
+        $table = $this->resolveTable($spec, $resource);
+
         // SQL-based endpoint: execute query instead of table lookup
-        if ($spec->isAdvancedMode() && $spec->endpoint_name === $resource) {
-            return $this->executeSqlEndpoint($spec, $request, $startTime, $resource);
+        if ($table->isSqlQuery()) {
+            return $this->executeSqlEndpoint($spec, $table, $request, $startTime, $resource);
         }
 
-        $table = $this->resolveTable($spec, $resource);
         $this->ensureOperationAllowed($table, 'list');
 
         $result = $this->queryService->list($spec, $request, $table->table_name);
@@ -189,12 +176,13 @@ class DynamicApiController extends Controller
 
     protected function executeSqlEndpoint(
         ApiSpec $spec,
+        ApiSpecTable $table,
         Request $request,
         float $startTime,
         string $resource,
     ): JsonResponse {
         try {
-            $result = $this->sqlExecutor->execute($spec, $request);
+            $result = $this->sqlExecutor->execute($spec, $table, $request);
 
             return $this->respond($result, $spec, $request, $startTime, $resource);
         } catch (\InvalidArgumentException $e) {

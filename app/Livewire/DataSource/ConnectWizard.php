@@ -60,29 +60,65 @@ class ConnectWizard extends Component
 
     public array $generatedSpec = [];
 
-    // Advanced Mode (SQL) fields
-    public string $sqlQuery = '';
+    // Advanced Mode (SQL) — multi-query support
+    public array $sqlQueries = [];
 
-    public string $endpointName = '';
-
-    public array $sqlValidationErrors = [];
-
-    public array $sqlResultColumns = [];
-
-    public array $sqlParameters = [];
-
-    public bool $sqlValidated = false;
+    public int $activeSqlIndex = 0;
 
     protected ?DataSource $dataSource = null;
 
     public function mount(): void
     {
         $this->authorize('create', DataSource::class);
+        $this->addSqlQuery(); // Initialize with one empty query
     }
 
     protected function isAdvancedMode(): bool
     {
         return $this->wizardMode === 'advanced';
+    }
+
+    public function addSqlQuery(): void
+    {
+        $this->sqlQueries[] = [
+            'endpoint_name' => '',
+            'sql_query' => '',
+            'validation_errors' => [],
+            'result_columns' => [],
+            'parameters' => [],
+            'validated' => false,
+        ];
+        $this->activeSqlIndex = count($this->sqlQueries) - 1;
+    }
+
+    public function removeSqlQuery(int $index): void
+    {
+        if (count($this->sqlQueries) <= 1) {
+            return; // Must have at least one query
+        }
+
+        array_splice($this->sqlQueries, $index, 1);
+        $this->sqlQueries = array_values($this->sqlQueries);
+
+        if ($this->activeSqlIndex >= count($this->sqlQueries)) {
+            $this->activeSqlIndex = count($this->sqlQueries) - 1;
+        }
+    }
+
+    public function setActiveSqlIndex(int $index): void
+    {
+        $this->activeSqlIndex = $index;
+    }
+
+    protected function allSqlQueriesValidated(): bool
+    {
+        foreach ($this->sqlQueries as $query) {
+            if (! $query['validated']) {
+                return false;
+            }
+        }
+
+        return ! empty($this->sqlQueries);
     }
 
     protected function isFileSource(): bool
@@ -104,12 +140,7 @@ class ConnectWizard extends Component
             2 => $this->isFileSource()
                 ? ['uploadedFile' => 'required|file|max:51200'] // 50MB max
                 : ['credentials.database' => 'required|string'],
-            5 => $this->isAdvancedMode()
-                ? [
-                    'sqlQuery' => 'required|string',
-                    'endpointName' => 'required|string|max:255|alpha_dash',
-                ]
-                : [],
+            5 => [], // Advanced mode validation handled separately below
             default => [],
         };
 
@@ -133,13 +164,12 @@ class ConnectWizard extends Component
             }
         }
 
-        // Advanced Mode: validate SQL before proceeding past step 5
+        // Advanced Mode: all queries must be validated before proceeding past step 5
         if ($this->currentStep === 5 && $this->isAdvancedMode()) {
-            if (! $this->sqlValidated) {
-                $this->validateSql();
-                if (! $this->sqlValidated) {
-                    return;
-                }
+            if (! $this->allSqlQueriesValidated()) {
+                $this->dispatch('toast', type: 'error', message: 'All SQL queries must be validated before proceeding.', duration: 5000);
+
+                return;
             }
         }
 
@@ -311,9 +341,13 @@ class ConnectWizard extends Component
     {
         $scanner = new PiiDetectionService;
 
-        // Advanced mode: scan SQL result columns
+        // Advanced mode: scan all SQL result columns across all queries
         if ($this->isAdvancedMode()) {
-            $columnNames = collect($this->sqlResultColumns)->pluck('name')->all();
+            $columnNames = collect($this->sqlQueries)
+                ->flatMap(fn ($q) => collect($q['result_columns'])->pluck('name'))
+                ->unique()
+                ->values()
+                ->all();
             $result = $scanner->scan($columnNames);
         } else {
             $result = $scanner->scan($this->allColumnsForPii);
@@ -326,37 +360,83 @@ class ConnectWizard extends Component
         ];
     }
 
-    public function validateSql(): void
+    public function validateSql(int $index = -1): void
     {
+        if ($index < 0) {
+            $index = $this->activeSqlIndex;
+        }
+
+        $query = $this->sqlQueries[$index] ?? null;
+        if (! $query) {
+            return;
+        }
+
+        $endpointName = trim($query['endpoint_name']);
+        $sqlQuery = trim($query['sql_query']);
+
+        if (empty($endpointName)) {
+            $this->sqlQueries[$index]['validation_errors'] = ['Endpoint name is required.'];
+            $this->sqlQueries[$index]['validated'] = false;
+            $this->dispatch('toast', type: 'error', message: 'Endpoint name is required.', duration: 5000);
+
+            return;
+        }
+
+        if (! preg_match('/^[a-z0-9_-]+$/i', $endpointName)) {
+            $this->sqlQueries[$index]['validation_errors'] = ['Endpoint name must be alphanumeric with dashes/underscores.'];
+            $this->sqlQueries[$index]['validated'] = false;
+            $this->dispatch('toast', type: 'error', message: 'Invalid endpoint name format.', duration: 5000);
+
+            return;
+        }
+
+        // Check for duplicate endpoint names
+        foreach ($this->sqlQueries as $i => $q) {
+            if ($i !== $index && strtolower(trim($q['endpoint_name'])) === strtolower($endpointName)) {
+                $this->sqlQueries[$index]['validation_errors'] = ['Duplicate endpoint name.'];
+                $this->sqlQueries[$index]['validated'] = false;
+                $this->dispatch('toast', type: 'error', message: 'Endpoint name must be unique.', duration: 5000);
+
+                return;
+            }
+        }
+
+        if (empty($sqlQuery)) {
+            $this->sqlQueries[$index]['validation_errors'] = ['SQL query is required.'];
+            $this->sqlQueries[$index]['validated'] = false;
+            $this->dispatch('toast', type: 'error', message: 'SQL query is required.', duration: 5000);
+
+            return;
+        }
+
         $validator = new SqlValidator;
-        $result = $validator->validate($this->sqlQuery);
+        $result = $validator->validate($sqlQuery);
 
         if (! $result->valid) {
-            $this->sqlValidationErrors = $result->errors;
-            $this->sqlValidated = false;
+            $this->sqlQueries[$index]['validation_errors'] = $result->errors;
+            $this->sqlQueries[$index]['validated'] = false;
             $this->dispatch('toast', type: 'error', message: implode(' ', $result->errors), duration: 5000);
 
             return;
         }
 
-        $this->sqlValidationErrors = [];
-        $this->sqlParameters = $result->parameters;
+        $this->sqlQueries[$index]['validation_errors'] = [];
+        $this->sqlQueries[$index]['parameters'] = $result->parameters;
 
         // Dry-run to get result shape
         try {
-            $this->dryRunSql();
-            $this->sqlValidated = true;
-            $this->dispatch('toast', type: 'success', message: 'SQL validated. '.count($this->sqlResultColumns).' result columns detected.', duration: 3000);
+            $this->dryRunSql($index, $sqlQuery);
+            $this->sqlQueries[$index]['validated'] = true;
+            $this->dispatch('toast', type: 'success', message: 'SQL validated. '.count($this->sqlQueries[$index]['result_columns']).' result columns detected.', duration: 3000);
         } catch (\Throwable $e) {
-            $this->sqlValidationErrors = ['Dry-run failed: '.$e->getMessage()];
-            $this->sqlValidated = false;
+            $this->sqlQueries[$index]['validation_errors'] = ['Dry-run failed: '.$e->getMessage()];
+            $this->sqlQueries[$index]['validated'] = false;
             $this->dispatch('toast', type: 'error', message: 'Query dry-run failed: '.$e->getMessage(), duration: 5000);
         }
     }
 
-    protected function dryRunSql(): void
+    protected function dryRunSql(int $index, string $sql): void
     {
-        // Create a temporary DataSource to connect
         $type = DataSourceType::from($this->type);
         $tempSpec = new ApiSpec;
         $tempSpec->id = 'dry-run-'.uniqid();
@@ -367,16 +447,22 @@ class ConnectWizard extends Component
         $tempSpec->setRelation('dataSource', $tempDataSource);
 
         $executor = app(SqlQueryExecutor::class);
-        $result = $executor->dryRun($tempSpec, $this->sqlQuery);
+        $result = $executor->dryRun($tempSpec, $sql);
 
-        $this->sqlResultColumns = $result['columns'] ?? [];
-        $this->sqlParameters = $result['parameters'] ?? $this->sqlParameters;
+        $this->sqlQueries[$index]['result_columns'] = $result['columns'] ?? [];
+        $this->sqlQueries[$index]['parameters'] = $result['parameters'] ?? $this->sqlQueries[$index]['parameters'];
     }
 
-    public function updatedSqlQuery(): void
+    public function updatedSqlQueries(mixed $value, ?string $key = null): void
     {
-        $this->sqlValidated = false;
-        $this->sqlValidationErrors = [];
+        // Only reset validation when the sql_query text changes, not endpoint_name
+        if ($key !== null && str_ends_with($key, '.sql_query')) {
+            $index = (int) explode('.', $key)[0];
+            if (isset($this->sqlQueries[$index])) {
+                $this->sqlQueries[$index]['validated'] = false;
+                $this->sqlQueries[$index]['validation_errors'] = [];
+            }
+        }
     }
 
     public function generateSpec(): void
@@ -414,8 +500,6 @@ class ConnectWizard extends Component
 
         $connector->disconnect();
 
-        $generator = app(SqlSpecGenerator::class);
-
         $apiSpec = ApiSpec::create([
             'user_id' => auth()->id(),
             'data_source_id' => $dataSource->id,
@@ -423,10 +507,6 @@ class ConnectWizard extends Component
             'wizard_mode' => 'advanced',
             'status' => 'pending',
             'openapi_spec' => [],
-            'sql_query' => $this->sqlQuery,
-            'endpoint_name' => $this->endpointName,
-            'sql_parameters' => $this->sqlParameters,
-            'result_columns' => $this->sqlResultColumns,
             'configuration' => [
                 'mode' => 'advanced',
                 'pii_excluded' => $this->piiResult['flagged'],
@@ -436,18 +516,31 @@ class ConnectWizard extends Component
             ],
         ]);
 
-        $spec = $generator->generate($apiSpec, [
-            'endpoint_name' => $this->endpointName,
-            'result_columns' => $this->sqlResultColumns,
-            'parameters' => $this->sqlParameters,
-        ]);
+        // Create an ApiSpecTable for each SQL query
+        foreach ($this->sqlQueries as $index => $query) {
+            ApiSpecTable::create([
+                'api_spec_id' => $apiSpec->id,
+                'table_name' => '_sql_'.$query['endpoint_name'],
+                'resource_name' => $query['endpoint_name'],
+                'operations' => ['list' => true],
+                'sql_query' => $query['sql_query'],
+                'sql_parameters' => $query['parameters'],
+                'result_columns' => $query['result_columns'],
+                'sort_order' => $index,
+            ]);
+        }
+
+        $generator = app(SqlSpecGenerator::class);
+        $tables = $apiSpec->tables()->get();
+        $spec = $generator->generateForTables($apiSpec, $tables);
 
         $apiSpec->update(['openapi_spec' => $spec]);
 
         $this->generatedSpec = $spec;
         $this->currentStep = 7;
 
-        $this->dispatch('toast', type: 'success', message: 'SQL endpoint spec generated.', duration: 3000);
+        $queryCount = count($this->sqlQueries);
+        $this->dispatch('toast', type: 'success', message: "{$queryCount} SQL endpoint(s) spec generated.", duration: 3000);
     }
 
     protected function generateDatabaseSpec(DataSourceType $type): void

@@ -23,7 +23,14 @@ class ApiSpecTable extends Model
             'operations' => 'array',
             'configuration' => 'array',
             'sort_order' => 'integer',
+            'sql_parameters' => 'array',
+            'result_columns' => 'array',
         ];
+    }
+
+    public function isSqlQuery(): bool
+    {
+        return ! empty($this->sql_query);
     }
 
     public function apiSpec(): BelongsTo
