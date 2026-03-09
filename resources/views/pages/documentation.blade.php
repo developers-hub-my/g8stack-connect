@@ -27,6 +27,7 @@
                         ['key' => 'deploy', 'icon' => 'rocket', 'label' => 'Deploy & Use API'],
                         ['key' => 'pii', 'icon' => 'shield', 'label' => 'PII & Data Privacy'],
                         ['key' => 'wizard-modes', 'icon' => 'wand-2', 'label' => 'Wizard Modes'],
+                        ['key' => 'sql-mode', 'icon' => 'terminal', 'label' => 'Advanced SQL Mode'],
                         ['key' => 'faq', 'icon' => 'help-circle', 'label' => 'FAQ'],
                     ];
                 @endphp

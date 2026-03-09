@@ -56,29 +56,35 @@
         </ul>
     </div>
 
-    <div class="rounded-lg border-2 border-zinc-200 p-6 dark:border-zinc-700">
+    <div class="rounded-lg border-2 border-amber-200 p-6 dark:border-amber-800">
         <div class="mb-4 flex items-center gap-2">
-            <span class="rounded bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{{ __('Advanced') }}</span>
-            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('Coming soon') }}</span>
+            <span class="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900 dark:text-amber-300">{{ __('Advanced') }}</span>
         </div>
         <p class="mb-4 text-sm font-medium text-zinc-900 dark:text-white">{{ __('For data scientists') }}</p>
         <ul class="space-y-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             <li class="flex gap-2">
-                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400"></span>
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
                 {{ __('Write custom SQL queries') }}
             </li>
             <li class="flex gap-2">
-                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400"></span>
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
                 {{ __('Complex joins & aggregations') }}
             </li>
             <li class="flex gap-2">
-                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400"></span>
-                {{ __('Named GET endpoints') }}
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
+                {{ __('Multiple named GET endpoints') }}
             </li>
             <li class="flex gap-2">
-                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400"></span>
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
                 {{ __('Parameter binding') }}
             </li>
+            <li class="flex gap-2">
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
+                {{ __('Database sources only') }}
+            </li>
         </ul>
+        <button @click="navigate('sql-mode')" class="mt-4 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300">
+            {{ __('Learn more →') }}
+        </button>
     </div>
 </div>

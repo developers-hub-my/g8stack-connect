@@ -69,4 +69,8 @@
         <x-icon name="wand-2" class="h-5 w-5 text-amber-600 dark:text-amber-400" />
         <span class="font-medium text-zinc-900 dark:text-white">{{ __('Wizard Modes') }}</span>
     </button>
+    <button @click="navigate('sql-mode')" class="flex items-center gap-3 rounded-lg border border-zinc-200 p-4 text-left text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+        <x-icon name="terminal" class="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        <span class="font-medium text-zinc-900 dark:text-white">{{ __('Advanced SQL Mode') }}</span>
+    </button>
 </div>

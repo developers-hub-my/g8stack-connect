@@ -14,7 +14,7 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
 | v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Done |
 | v0.3 | File Sources | CSV, JSON, Excel | Beta | Done |
-| v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
+| v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | In Progress |
 | v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
 | v1.0 | GA Release | Polish, audit, PII hardening, docs | Public | Planned |
 
@@ -32,7 +32,7 @@ gantt
     v0.2.2 Runtime Hardening :done, 2026-03-06, 2026-03-06
   section Core Modes
     v0.3 File Sources       :done, 2026-03-08, 2026-03-09
-    v0.4 Advanced SQL Mode  :2026-04-21, 2026-05-20
+    v0.4 Advanced SQL Mode  :active, 2026-03-09, 2026-03-10
   section Integration
     v0.5 G8Stack Push       :2026-05-21, 2026-06-20
   section Release
@@ -475,28 +475,35 @@ storage/data/dummy/                                  # Test data files (CSV, JSO
 
 ## v0.4 — Advanced Mode (SQL to GET)
 
-**Goal**: Developers write a SELECT query — it becomes a named GET endpoint with query parameters.
+**Goal**: Developers write SELECT queries — each becomes a named GET endpoint with query parameters. Multiple endpoints per spec supported.
+
+**Status**: In Progress (2026-03-09)
 
 ### Scope
 
-- SQL editor in wizard (Advanced Mode)
+- SQL editor in wizard (Advanced Mode) with multi-query tabbed UI
 - Query parser — validate only SELECT statements:
-  - Block: `INSERT`, `UPDATE`, `DELETE`, `DROP`, `TRUNCATE`, `ALTER`
-  - Block: access to `information_schema`, `pg_catalog`, `sys`, `mysql`
+  - Block: `INSERT`, `UPDATE`, `DELETE`, `DROP`, `TRUNCATE`, `ALTER`, `CREATE`, `GRANT`, `REVOKE`
+  - Block: access to `information_schema`, `pg_catalog`, `sys`, `mysql`, `sqlite_master`
   - Allow: `SELECT`, `WITH` (CTE), `JOIN`, subqueries on app tables only
-- Named query: developer sets endpoint name — `/api/{name}`
-- Parameter binding: `?` or `:param` in SQL — becomes query param in OpenAPI spec
-- Query dry-run: execute with LIMIT 5, show result shape (no data shown to user)
-- Row cap: enforce max rows via Settings even on custom SQL
+- Multiple named queries per spec — each stored as `ApiSpecTable` with `sql_query`
+- Parameter binding: `?` or `:param` in SQL — becomes required query param in OpenAPI spec
+- Query dry-run: execute with LIMIT 1, detect result columns (no data shown to user)
+- Row cap + timeout: hardcoded, non-configurable safety limits
 - PII scan on result columns (same service, same rules)
-- Only generates `GET` endpoint — no writes
+- Only generates `GET` endpoints — no writes
+- Runtime: `DynamicApiController` resolves SQL tables via `isSqlQuery()` and delegates to `SqlQueryExecutor`
 
 ### Deliverables
 
 ```text
-app/Services/SqlValidator.php
-app/Services/DraftGenerator/SqlDraftGenerator.php
-app/Livewire/DataSource/SqlQueryWizard.php
+app/Services/SqlValidator.php                       ✅
+app/Services/SpecGenerator/SqlSpecGenerator.php     ✅
+app/Services/ApiRuntime/SqlQueryExecutor.php        ✅
+app/DataTransferObjects/SqlValidationResult.php     ✅
+app/Livewire/DataSource/ConnectWizard.php           ✅ (multi-query UI)
+app/Http/Controllers/Api/V1/DynamicApiController.php ✅ (table-level SQL)
+database/migrations/*_add_sql_columns_to_api_spec_tables.php ✅
 ```
 
 ### Security Constraints (hardcoded, not configurable)
@@ -507,15 +514,22 @@ app/Livewire/DataSource/SqlQueryWizard.php
 | Connection | Always read-only (enforced at connector level) |
 | Query timeout | 10 seconds max |
 | Result cap | 1000 rows max regardless of query |
+| Max query length | 10,000 characters |
+| Blocked keywords | 28 SQL keywords blocked |
+| Blocked tables | 9 system schemas/databases blocked |
 
 ### Exit Criteria
 
-- [ ] SQL validator blocks all non-SELECT statements
-- [ ] System table access blocked (`information_schema`, `pg_catalog`, etc.)
-- [ ] Named endpoints generate correct OpenAPI spec
-- [ ] Parameter binding produces query parameters in spec
-- [ ] Timeout and row cap enforced at query level
-- [ ] PII scan applied to result columns
+- [x] SQL validator blocks all non-SELECT statements (29 tests)
+- [x] System table access blocked (`information_schema`, `pg_catalog`, etc.)
+- [x] Named endpoints generate correct OpenAPI spec (6 tests)
+- [x] Parameter binding produces query parameters in spec
+- [x] Timeout and row cap enforced at query level
+- [x] PII scan applied to result columns
+- [x] Multiple SQL endpoints per spec (multi-query UI)
+- [x] DynamicApiController routes SQL endpoints via table-level `isSqlQuery()`
+- [ ] End-to-end runtime test with deployed SQL spec
+- [ ] Documentation page for Advanced SQL Mode
 
 ## v0.5 — G8Stack Push
 

@@ -30,6 +30,7 @@ This project is built with:
 5. [Sidebar Navigation](09-sidebar.md) - Dynamic menu system
 6. [Toast Notifications](10-toast-notifications.md) - Flash messages and alerts
 7. [File Source Connectors](11-file-connectors.md) - CSV, JSON, Excel data source support
+8. [Advanced SQL Mode](12-sql-mode.md) - Custom SELECT queries as GET endpoints
 
 ## Development Workflow
 
