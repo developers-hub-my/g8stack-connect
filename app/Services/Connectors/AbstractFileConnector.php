@@ -28,14 +28,14 @@ abstract class AbstractFileConnector implements DataSourceConnector
 
     abstract protected function parseFile(string $filePath): void;
 
-    public function setUserId(int $userId): static
+    public function setUserId(?int $userId): static
     {
         $this->userId = $userId;
 
         return $this;
     }
 
-    public function setDataSourceId(int $dataSourceId): static
+    public function setDataSourceId(?int $dataSourceId): static
     {
         $this->dataSourceId = $dataSourceId;
 

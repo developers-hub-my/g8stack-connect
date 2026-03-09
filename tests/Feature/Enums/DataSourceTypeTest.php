@@ -24,3 +24,23 @@ it('has descriptions for all cases', function () {
         expect($case->description())->toBeString()->not->toBeEmpty();
     }
 });
+
+it('identifies file-based sources', function () {
+    expect(DataSourceType::CSV->isFile())->toBeTrue()
+        ->and(DataSourceType::JSON->isFile())->toBeTrue()
+        ->and(DataSourceType::EXCEL->isFile())->toBeTrue()
+        ->and(DataSourceType::POSTGRESQL->isFile())->toBeFalse()
+        ->and(DataSourceType::MYSQL->isFile())->toBeFalse()
+        ->and(DataSourceType::MSSQL->isFile())->toBeFalse()
+        ->and(DataSourceType::SQLITE->isFile())->toBeFalse();
+});
+
+it('identifies database sources', function () {
+    expect(DataSourceType::POSTGRESQL->isDatabase())->toBeTrue()
+        ->and(DataSourceType::MYSQL->isDatabase())->toBeTrue()
+        ->and(DataSourceType::MSSQL->isDatabase())->toBeTrue()
+        ->and(DataSourceType::SQLITE->isDatabase())->toBeTrue()
+        ->and(DataSourceType::CSV->isDatabase())->toBeFalse()
+        ->and(DataSourceType::JSON->isDatabase())->toBeFalse()
+        ->and(DataSourceType::EXCEL->isDatabase())->toBeFalse();
+});
