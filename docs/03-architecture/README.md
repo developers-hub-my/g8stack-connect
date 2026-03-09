@@ -9,6 +9,7 @@ This project follows Laravel best practices with additional opinionated standard
 ## Table of Contents
 
 1. [Code Quality](01-code-quality.md) - Linting, static analysis, testing standards
+2. [Connector Architecture](02-connectors.md) - Data source connectors (DB + file)
 
 ## Key Principles
 
@@ -151,6 +152,45 @@ Utility scripts in `bin/`:
 - Better error messages
 - Architecture testing built-in
 - Modern PHP features
+
+## Connector Architecture
+
+G8Connect uses a connector pattern to support multiple data source types. All connectors implement the `DataSourceConnector` contract.
+
+### Database Connectors (v0.1)
+
+`AbstractDatabaseConnector` provides shared logic for SQL databases:
+
+- **PostgresConnector** — PostgreSQL via `pgsql` driver
+- **MySqlConnector** — MySQL via `mysql` driver
+- **MssqlConnector** — SQL Server via `sqlsrv` driver
+- **SqliteConnector** — SQLite via `sqlite` driver
+
+### File Connectors (v0.3)
+
+`AbstractFileConnector` provides shared logic for file-based sources:
+
+- **CsvConnector** — CSV parsing via `league/csv`
+- **JsonConnector** — JSON arrays and `{ "data": [...] }` wrapper format
+- **ExcelConnector** — Multi-sheet `.xlsx` via `phpoffice/phpspreadsheet`
+
+Key design decisions:
+
+- File connectors are **read-only** — only list and show operations
+- Column types are inferred by sampling up to 100 rows (integer, decimal, boolean, date, datetime, varchar)
+- Excel sheets are treated as separate tables for multi-table spec generation
+- `originalFilename` is passed through credentials for consistent table name derivation
+- `ConnectorFactory::make()` returns `DataSourceConnector` (not `AbstractDatabaseConnector`) to support both types
+
+### Spec Regeneration Service
+
+`SpecRegenerationService` is the single source of truth for OpenAPI spec generation. It consolidates logic previously duplicated across:
+
+- `ConnectWizard` (initial spec generation)
+- `GuidedConfigWizard` (configuration save)
+- `Manage` (resource save)
+
+The service loads all `ApiSpecTable` records with their `ApiSpecField` entries, resolves `DataSourceSchema` for each table, and delegates to `GuidedSpecGenerator::generateForTables()` for the combined OpenAPI output.
 
 ## Cross-References
 

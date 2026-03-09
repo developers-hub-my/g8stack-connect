@@ -13,7 +13,7 @@ through G8Stack. Every phase outputs drafts — nothing deploys without G8Stack 
 | v0.2 | Guided Mode | Field selection, methods, filters, versioning | Beta | Done |
 | v0.2.1 | Dynamic Runtime | Serve deployed specs as live CRUD endpoints | Beta | Done |
 | v0.2.2 | Runtime Hardening | Validation, security, headers, grouped specs | Beta | Done |
-| v0.3 | File Sources | CSV, JSON, Excel | Beta | Planned |
+| v0.3 | File Sources | CSV, JSON, Excel | Beta | Done |
 | v0.4 | Advanced Mode | SQL queries to GET endpoints | GA prep | Planned |
 | v0.5 | G8Stack Push | Spec submission + status tracking | GA | Planned |
 | v1.0 | GA Release | Polish, audit, PII hardening, docs | Public | Planned |
@@ -31,7 +31,7 @@ gantt
   section Hardening
     v0.2.2 Runtime Hardening :done, 2026-03-06, 2026-03-06
   section Core Modes
-    v0.3 File Sources       :2026-03-21, 2026-04-20
+    v0.3 File Sources       :done, 2026-03-08, 2026-03-09
     v0.4 Advanced SQL Mode  :2026-04-21, 2026-05-20
   section Integration
     v0.5 G8Stack Push       :2026-05-21, 2026-06-20
@@ -404,44 +404,74 @@ database/migrations/xxxx_create_api_spec_tables_table.php
 
 ---
 
-## v0.3 — File Sources
+## v0.3 — File Sources ✅
 
 **Goal**: Upload CSV, JSON, or Excel files — get a read-only API draft from the data.
 
+**Status**: Complete (2026-03-09)
+
 ### Scope
 
-- File connector: upload via UI, store via Spatie MediaLibrary
-- Supported: **CSV**, **JSON**, **Excel (.xlsx)**
+- File connector base class (`AbstractFileConnector`) with shared connect/introspect/preview logic
+- Supported: **CSV** (via `league/csv`), **JSON** (native), **Excel** (via `phpoffice/phpspreadsheet`)
 - File introspection:
-  - CSV/Excel: detect headers, infer column types
-  - JSON: detect top-level array structure, infer field types
-- Auto-generate read-only spec (GET list + GET single only — no writes from files)
-- Row limit enforced at draft level (configurable via Settings)
-- File-sourced specs labelled clearly — approvers in G8Stack can see source type
-- Temp file cleanup after introspection (don't persist raw uploads long-term)
+  - CSV: detect headers from first row, infer column types by sampling rows
+  - JSON: detect top-level arrays and `{ "data": [...] }` wrapper format, infer field types
+  - Excel: multi-sheet support — each sheet parsed as a separate "table"
+- Column type inference: samples up to 100 rows to detect integer, decimal, boolean, date, datetime, varchar
+- Multi-table selection in wizard — select multiple tables/sheets for spec generation
+- Auto-generate read-only spec (GET list + GET single only — no writes from file sources)
+- File stored permanently via Laravel filesystem (`local` disk) after wizard completion
+- Source type tracked in metadata (`original_filename`, `file_size`)
+- Integrated into existing ConnectWizard — no separate wizard needed
+- Consolidated spec generation via `SpecRegenerationService` (single source of truth)
 
 ### Deliverables
 
 ```text
-app/Services/Connectors/CsvConnector.php
-app/Services/Connectors/JsonConnector.php
-app/Services/Connectors/ExcelConnector.php
-app/Services/Introspectors/FileIntrospector.php
-app/Livewire/DataSource/FileUploadWizard.php
+app/Services/Connectors/AbstractFileConnector.php    # Base class for all file connectors
+app/Services/Connectors/CsvConnector.php             # CSV parsing via league/csv
+app/Services/Connectors/JsonConnector.php            # JSON array/wrapper parsing
+app/Services/Connectors/ExcelConnector.php           # Multi-sheet Excel parsing
+app/Services/Introspectors/FileIntrospector.php      # Schema storage for file sources
+app/Services/SpecGenerator/SpecRegenerationService.php  # Consolidated spec generation
+app/Enums/DataSourceType.php                         # Added CSV, JSON, EXCEL cases + isFile()/isDatabase()
+app/Services/Connectors/ConnectorFactory.php         # Updated for file source types
+app/Livewire/DataSource/ConnectWizard.php            # Extended with file upload + multi-table
+resources/views/livewire/data-source/connect-wizard.blade.php  # File upload UI + multi-select tables
+tests/Feature/Services/CsvConnectorTest.php          # 6 tests
+tests/Feature/Services/JsonConnectorTest.php         # 7 tests
+tests/Feature/Services/ExcelConnectorTest.php        # 6 tests
+tests/Feature/Enums/DataSourceTypeTest.php           # Updated for file types
+storage/data/dummy/                                  # Test data files (CSV, JSON, Excel)
 ```
 
 ### Exit Criteria
 
-- [ ] CSV, JSON, and Excel files upload and introspect correctly
-- [ ] Column types inferred accurately from file content
-- [ ] Generated drafts are read-only (GET endpoints only)
-- [ ] Source type label included in draft metadata
-- [ ] Temp files cleaned up after processing
+- [x] CSV, JSON, and Excel files upload and introspect correctly
+- [x] Column types inferred accurately from file content (integer, decimal, boolean, date, datetime, varchar)
+- [x] Multi-sheet Excel files introspect each sheet as a separate table
+- [x] JSON supports both top-level arrays and `{ "data": [...] }` wrapper format
+- [x] Generated drafts are read-only (GET list + GET single only)
+- [x] Source type and original filename included in draft metadata
+- [x] Files stored permanently after wizard completion
+- [x] Multi-table selection in wizard with select all/clear controls
+- [x] Spec generation consolidated into single `SpecRegenerationService`
+- [x] Wizard reuses existing ConnectWizard flow (no separate FileUploadWizard)
 
 ### Notes
 
 > File sources only support Simple Mode and Guided Mode field selection.
 > SQL Mode does not apply to file sources.
+
+> **Gotcha:** Livewire temp files are cleaned up between steps. Capture `getClientOriginalName()`
+> early, and use `filesize()` on the stored path — not `getSize()` on the temp upload.
+
+> **Gotcha:** The `local` disk root is `storage/app/`, not `storage/app/private/`.
+> Use `storage_path('app/' . $storedPath)` after `$file->store('data-sources', 'local')`.
+
+> **Gotcha:** `deriveTableName()` must use `originalFilename` (not the storage path) for
+> consistent table name derivation across the Livewire request lifecycle.
 
 ## v0.4 — Advanced Mode (SQL to GET)
 
@@ -577,7 +607,7 @@ graph LR
     v01["v0.1 Foundation ✅"] --> v02["v0.2 Guided Mode ✅"]
     v02 --> v021["v0.2.1 Dynamic Runtime ✅"]
     v021 --> v022["v0.2.2 Runtime Hardening ✅"]
-    v022 --> v03["v0.3 File Sources"]
+    v022 --> v03["v0.3 File Sources ✅"]
     v022 --> v04["v0.4 Advanced SQL"]
     v04 --> v05["v0.5 G8Stack Push"]
     v03 --> v05
@@ -592,21 +622,22 @@ graph LR
 | v0.3 | CSV, JSON, Excel (.xlsx) |
 | Post-v1.0 | MongoDB, Redis, XML, Parquet, REST/SOAP, S3/MinIO, Google Sheets, SFTP |
 
-## What's Next — v0.3 File Sources
+## What's Next — v0.4 Advanced SQL Mode
 
-v0.2.2 is complete. Next phase: **v0.3 File Sources**.
+v0.3 is complete. Next phase: **v0.4 Advanced Mode (SQL to GET)**.
 
 ### Implementation Order
 
 ```
-Step 1:  CsvConnector — parse headers, infer types, preview rows
-Step 2:  JsonConnector — detect array structure, infer field types
-Step 3:  ExcelConnector — read .xlsx sheets, headers, types
-Step 4:  FileIntrospector — unified introspection for all file types
-Step 5:  FileUploadWizard — Livewire upload UI with Spatie MediaLibrary
-Step 6:  Read-only spec generation (GET list + GET single only)
-Step 7:  Temp file cleanup after processing
-Step 8:  Tests for all above
+Step 1:  SqlValidator — whitelist parser, block non-SELECT statements
+Step 2:  SQL editor UI — Advanced Mode wizard step with CodeMirror/Monaco
+Step 3:  Parameter binding — :param and ? detection → OpenAPI query params
+Step 4:  Query dry-run — execute with LIMIT 5, validate result shape
+Step 5:  SqlSpecGenerator — generate GET-only endpoints from SQL queries
+Step 6:  Named endpoints — /api/connect/{slug}/{name}
+Step 7:  Timeout (10s) and row cap (1000) enforcement
+Step 8:  PII scan on result columns
+Step 9:  Tests for all above
 ```
 
 ## References

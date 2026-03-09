@@ -27,12 +27,14 @@ Building features and working with the codebase:
 - [Secure File Access](02-development/08-secure-file-access.md) - Protected file serving
 - [Sidebar Navigation](02-development/09-sidebar.md) - Menu configuration
 - [Toast Notifications](02-development/10-toast-notifications.md) - User notifications
+- [File Source Connectors](02-development/11-file-connectors.md) - CSV, JSON, Excel data sources
 
 ### Architecture
 
 Understanding the codebase structure and standards:
 
 - [Code Quality](03-architecture/01-code-quality.md) - Linting, testing, and analysis standards
+- [Connector Architecture](03-architecture/02-connectors.md) - Data source connectors (DB + file)
 
 ### Deployment
 
