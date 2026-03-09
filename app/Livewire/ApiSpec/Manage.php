@@ -7,6 +7,7 @@ namespace App\Livewire\ApiSpec;
 use App\Concerns\InteractsWithLivewireAlert;
 use App\Enums\SpecStatus;
 use App\Models\ApiSpec;
+use App\Models\ApiSpecKey;
 use App\Models\ApiSpecTable;
 use App\Models\DataSource;
 use App\Services\ApiRuntime\ResourceNameSuggester;
@@ -40,6 +41,11 @@ class Manage extends Component
     public array $resources = [];
 
     public array $availableTables = [];
+
+    // API Key management
+    public string $newKeyName = '';
+
+    public ?string $newlyCreatedKey = null;
 
     public function mount(?string $uuid = null): void
     {
@@ -197,6 +203,42 @@ class Manage extends Component
         $this->redirect(route('api-specs.show', ['uuid' => $this->apiSpec->uuid]), navigate: true);
     }
 
+    public function createApiKey(): void
+    {
+        $this->validate([
+            'newKeyName' => 'required|string|max:255',
+        ]);
+
+        $plainKey = ApiSpecKey::generateKey();
+
+        ApiSpecKey::create([
+            'api_spec_id' => $this->apiSpec->id,
+            'name' => $this->newKeyName,
+            'key_hash' => ApiSpecKey::hashKey($plainKey),
+            'key_prefix' => ApiSpecKey::prefixFromKey($plainKey),
+            'rate_limit' => $this->rateLimit,
+        ]);
+
+        $this->newlyCreatedKey = $plainKey;
+        $this->newKeyName = '';
+        $this->alert('Success', 'API key created. Copy it now — it won\'t be shown again.');
+    }
+
+    public function revokeApiKey(int $keyId): void
+    {
+        $key = ApiSpecKey::where('id', $keyId)
+            ->where('api_spec_id', $this->apiSpec->id)
+            ->firstOrFail();
+
+        $key->delete();
+        $this->alert('Success', "API key \"{$key->name}\" revoked.");
+    }
+
+    public function dismissNewKey(): void
+    {
+        $this->newlyCreatedKey = null;
+    }
+
     public function deploy(): void
     {
         $this->apiSpec->update(['status' => SpecStatus::DEPLOYED]);
@@ -261,6 +303,7 @@ class Manage extends Component
         return view('livewire.api-spec.manage', [
             'dataSources' => DataSource::orderBy('name')->get(),
             'statuses' => SpecStatus::cases(),
+            'apiKeys' => $this->apiSpec?->keys()->withTrashed(false)->latest()->get() ?? collect(),
         ]);
     }
 }
