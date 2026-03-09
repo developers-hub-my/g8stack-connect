@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\PiiScanner;
+use App\Services\PiiDetection\PiiDetectionService;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
 use App\Settings\NotificationSettings;
@@ -15,7 +17,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->bind(PiiScanner::class, PiiDetectionService::class);
+    }
 
     /**
      * Bootstrap any application services.

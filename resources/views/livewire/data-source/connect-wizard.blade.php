@@ -2,7 +2,12 @@
     {{-- Step Indicator --}}
     <div class="mb-8">
         <div class="flex items-center justify-between">
-            @foreach(['Source', 'Connect', 'Validate', 'Introspect', 'Select Tables', 'PII Scan', 'Review'] as $i => $label)
+            @php
+                $stepLabels = $wizardMode === 'advanced'
+                    ? ['Source', 'Connect', 'Validate', 'Introspect', 'SQL Query', 'PII Scan', 'Review']
+                    : ['Source', 'Connect', 'Validate', 'Introspect', 'Select Tables', 'PII Scan', 'Review'];
+            @endphp
+            @foreach($stepLabels as $i => $label)
                 <div class="flex items-center {{ $i > 0 ? 'flex-1' : '' }}">
                     @if($i > 0)
                         <div class="mx-2 h-0.5 flex-1 {{ $currentStep > $i ? 'bg-blue-600' : 'bg-zinc-200 dark:bg-zinc-700' }}"></div>
@@ -15,7 +20,12 @@
             @endforeach
         </div>
         <div class="mt-2 flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-            @foreach(['Source', 'Connect', 'Validate', 'Introspect', 'Select', 'PII', 'Review'] as $label)
+            @php
+                $shortLabels = $wizardMode === 'advanced'
+                    ? ['Source', 'Connect', 'Validate', 'Introspect', 'SQL', 'PII', 'Review']
+                    : ['Source', 'Connect', 'Validate', 'Introspect', 'Select', 'PII', 'Review'];
+            @endphp
+            @foreach($shortLabels as $label)
                 <span class="w-8 text-center">{{ $label }}</span>
             @endforeach
         </div>
@@ -28,16 +38,24 @@
 
             <div>
                 <label class="block text-sm font-medium text-zinc-900 dark:text-white mb-3">Wizard Mode</label>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                     @foreach(\App\Enums\WizardMode::cases() as $mode)
-                        @if($mode->value !== 'advanced')
-                            <button type="button" wire:click="$set('wizardMode', '{{ $mode->value }}')"
-                                class="rounded-lg border-2 p-4 text-left transition
-                                    {{ $wizardMode === $mode->value ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' }}">
-                                <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $mode->label() }}</div>
-                                <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ $mode->description() }}</div>
-                            </button>
-                        @endif
+                        @php
+                            $isAdvanced = $mode->value === 'advanced';
+                            $isFileType = in_array($type, ['csv', 'json', 'excel']);
+                            $disabled = $isAdvanced && $isFileType;
+                        @endphp
+                        <button type="button" wire:click="$set('wizardMode', '{{ $mode->value }}')"
+                            {{ $disabled ? 'disabled' : '' }}
+                            class="rounded-lg border-2 p-4 text-left transition
+                                {{ $disabled ? 'opacity-40 cursor-not-allowed' : '' }}
+                                {{ $wizardMode === $mode->value ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' }}">
+                            <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $mode->label() }}</div>
+                            <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ $mode->description() }}</div>
+                            @if($isAdvanced)
+                                <div class="mt-1 text-xs text-amber-600 dark:text-amber-400">Database sources only</div>
+                            @endif
+                        </button>
                     @endforeach
                 </div>
             </div>
@@ -155,39 +173,52 @@
         </div>
     @endif
 
-    {{-- Step 4: Introspect --}}
+    {{-- Step 4: Introspect / Table Selection --}}
     @if($currentStep === 4)
         <div>
             <flux:heading size="lg" class="mb-4">Available Tables</flux:heading>
             @if(count($tables) > 0)
-                <div class="mb-4 flex items-center justify-between">
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">Found {{ count($tables) }} {{ count($tables) === 1 ? 'table' : 'tables' }}. Select tables to include in the API spec.</p>
-                    <div class="flex gap-2">
-                        <flux:button wire:click="selectAllTables" variant="ghost" size="sm">Select All</flux:button>
-                        @if(count($selectedTables) > 0)
-                            <flux:button wire:click="deselectAllTables" variant="ghost" size="sm">Clear</flux:button>
-                        @endif
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                    @foreach($tables as $table)
-                        <button type="button" wire:click="toggleTable('{{ $table }}')"
-                            class="rounded-lg border-2 p-3 text-left text-sm transition
-                                {{ in_array($table, $selectedTables) ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' }}">
-                            <div class="flex items-center gap-2">
-                                <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
-                                    {{ in_array($table, $selectedTables) ? 'border-blue-600 bg-blue-600' : 'border-zinc-300 dark:border-zinc-600' }}">
-                                    @if(in_array($table, $selectedTables))
-                                        <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                    @endif
-                                </div>
-                                {{ $table }}
+                @if($wizardMode === 'advanced')
+                    <p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+                        Found {{ count($tables) }} {{ count($tables) === 1 ? 'table' : 'tables' }}. These are available for your SQL query in the next step.
+                    </p>
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                        @foreach($tables as $table)
+                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3 text-sm text-zinc-700 dark:text-zinc-300">
+                                <code>{{ $table }}</code>
                             </div>
-                        </button>
-                    @endforeach
-                </div>
-                @if(count($selectedTables) > 0)
-                    <p class="mt-3 text-sm text-blue-600 dark:text-blue-400">{{ count($selectedTables) }} {{ count($selectedTables) === 1 ? 'table' : 'tables' }} selected</p>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Found {{ count($tables) }} {{ count($tables) === 1 ? 'table' : 'tables' }}. Select tables to include in the API spec.</p>
+                        <div class="flex gap-2">
+                            <flux:button wire:click="selectAllTables" variant="ghost" size="sm">Select All</flux:button>
+                            @if(count($selectedTables) > 0)
+                                <flux:button wire:click="deselectAllTables" variant="ghost" size="sm">Clear</flux:button>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                        @foreach($tables as $table)
+                            <button type="button" wire:click="toggleTable('{{ $table }}')"
+                                class="rounded-lg border-2 p-3 text-left text-sm transition
+                                    {{ in_array($table, $selectedTables) ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300' }}">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex h-4 w-4 shrink-0 items-center justify-center rounded border
+                                        {{ in_array($table, $selectedTables) ? 'border-blue-600 bg-blue-600' : 'border-zinc-300 dark:border-zinc-600' }}">
+                                        @if(in_array($table, $selectedTables))
+                                            <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                        @endif
+                                    </div>
+                                    {{ $table }}
+                                </div>
+                            </button>
+                        @endforeach
+                    </div>
+                    @if(count($selectedTables) > 0)
+                        <p class="mt-3 text-sm text-blue-600 dark:text-blue-400">{{ count($selectedTables) }} {{ count($selectedTables) === 1 ? 'table' : 'tables' }} selected</p>
+                    @endif
                 @endif
             @else
                 <p class="text-sm text-zinc-500">No tables found in this data source.</p>
@@ -195,39 +226,133 @@
         </div>
     @endif
 
-    {{-- Step 5: Schema Preview --}}
+    {{-- Step 5: Schema Preview (Simple/Guided) or SQL Editor (Advanced) --}}
     @if($currentStep === 5)
-        <div class="space-y-6">
-            <flux:heading size="lg">Schema Preview</flux:heading>
-            <p class="text-sm text-zinc-600 dark:text-zinc-400">Showing columns for {{ count($selectedTables) }} selected {{ count($selectedTables) === 1 ? 'table' : 'tables' }}.</p>
-
-            @foreach($schemaColumns as $tableName => $columns)
-                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                    <div class="bg-zinc-50 dark:bg-zinc-800 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">{{ $tableName }}</h3>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ count($columns) }} columns</p>
-                    </div>
-                    <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-                        <thead class="bg-zinc-50/50 dark:bg-zinc-800/50">
-                            <tr>
-                                <th class="py-2.5 pr-3 pl-4 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-100 sm:pl-6">Column</th>
-                                <th class="px-3 py-2.5 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-100">Type</th>
-                                <th class="px-3 py-2.5 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-100">Nullable</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
-                            @foreach($columns as $col)
-                                <tr>
-                                    <td class="py-3 pr-3 pl-4 text-sm font-medium text-zinc-900 dark:text-white sm:pl-6">{{ $col['name'] }}</td>
-                                    <td class="px-3 py-3 text-sm text-zinc-700 dark:text-zinc-300">{{ $col['type'] }}</td>
-                                    <td class="px-3 py-3 text-sm text-zinc-700 dark:text-zinc-300">{{ $col['nullable'] ? 'Yes' : 'No' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+        @if($wizardMode === 'advanced')
+            {{-- Advanced Mode: SQL Editor --}}
+            <div class="space-y-5">
+                <div>
+                    <flux:heading size="lg">SQL Query Editor</flux:heading>
+                    <flux:text class="mt-1">Write a SELECT query. Only SELECT and WITH (CTE) statements are allowed.</flux:text>
                 </div>
-            @endforeach
-        </div>
+
+                <flux:input wire:model="endpointName" label="Endpoint Name" placeholder="e.g. active-employees, sales-summary" description="URL-safe name for the GET endpoint. Use lowercase with hyphens." />
+
+                <div>
+                    <label class="block text-sm font-medium text-zinc-900 dark:text-white mb-2">SQL Query</label>
+                    <textarea wire:model.live.debounce.500ms="sqlQuery"
+                        rows="10"
+                        placeholder="SELECT e.name, e.email, d.name AS department&#10;FROM employees e&#10;JOIN departments d ON e.dept_id = d.id&#10;WHERE d.active = :active"
+                        class="block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 font-mono text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:border-blue-500 focus:ring-blue-500"></textarea>
+
+                    @error('sqlQuery') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                @if(!empty($sqlValidationErrors))
+                    <div class="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Validation Errors</h3>
+                        <ul class="mt-2 list-disc list-inside text-sm text-red-700 dark:text-red-300">
+                            @foreach($sqlValidationErrors as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if($sqlValidated && !empty($sqlResultColumns))
+                    <div class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+                        <h3 class="text-sm font-medium text-green-800 dark:text-green-200">Query Validated</h3>
+                        <p class="mt-1 text-sm text-green-700 dark:text-green-300">{{ count($sqlResultColumns) }} result columns detected.</p>
+
+                        <div class="mt-3">
+                            <table class="min-w-full divide-y divide-green-200 dark:divide-green-800">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 pr-3 text-left text-xs font-semibold text-green-800 dark:text-green-200">Column</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-green-800 dark:text-green-200">Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-green-100 dark:divide-green-900">
+                                    @foreach($sqlResultColumns as $col)
+                                        <tr>
+                                            <td class="py-2 pr-3 text-sm font-mono text-green-900 dark:text-green-100">{{ $col['name'] }}</td>
+                                            <td class="px-3 py-2 text-sm text-green-700 dark:text-green-300">{{ $col['type'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if(!empty($sqlParameters))
+                            <div class="mt-3">
+                                <p class="text-xs font-medium text-green-800 dark:text-green-200">Parameters:</p>
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    @foreach($sqlParameters as $param)
+                                        <flux:badge color="green" size="sm">:{{ $param }}</flux:badge>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <div class="flex items-center gap-3">
+                    <flux:button wire:click="validateSql" variant="filled" size="sm">
+                        Validate & Test Query
+                    </flux:button>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">Runs a dry-run with LIMIT 1 to verify the query shape.</p>
+                </div>
+
+                {{-- Available tables reference --}}
+                @if(count($tables) > 0)
+                    <details class="rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Available Tables ({{ count($tables) }})
+                        </summary>
+                        <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3">
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($tables as $table)
+                                    <code class="rounded bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300">{{ $table }}</code>
+                                @endforeach
+                            </div>
+                        </div>
+                    </details>
+                @endif
+            </div>
+        @else
+            {{-- Simple/Guided: Schema Preview --}}
+            <div class="space-y-6">
+                <flux:heading size="lg">Schema Preview</flux:heading>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">Showing columns for {{ count($selectedTables) }} selected {{ count($selectedTables) === 1 ? 'table' : 'tables' }}.</p>
+
+                @foreach($schemaColumns as $tableName => $columns)
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                        <div class="bg-zinc-50 dark:bg-zinc-800 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+                            <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">{{ $tableName }}</h3>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ count($columns) }} columns</p>
+                        </div>
+                        <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+                            <thead class="bg-zinc-50/50 dark:bg-zinc-800/50">
+                                <tr>
+                                    <th class="py-2.5 pr-3 pl-4 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-100 sm:pl-6">Column</th>
+                                    <th class="px-3 py-2.5 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-100">Type</th>
+                                    <th class="px-3 py-2.5 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-100">Nullable</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
+                                @foreach($columns as $col)
+                                    <tr>
+                                        <td class="py-3 pr-3 pl-4 text-sm font-medium text-zinc-900 dark:text-white sm:pl-6">{{ $col['name'] }}</td>
+                                        <td class="px-3 py-3 text-sm text-zinc-700 dark:text-zinc-300">{{ $col['type'] }}</td>
+                                        <td class="px-3 py-3 text-sm text-zinc-700 dark:text-zinc-300">{{ $col['nullable'] ? 'Yes' : 'No' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     @endif
 
     {{-- Step 6: PII Scan --}}
@@ -299,10 +424,22 @@
                 <flux:button wire:click="generateSpec" variant="primary">
                     Generate Spec
                 </flux:button>
+            @elseif($currentStep === 4 && $wizardMode === 'advanced')
+                {{-- Advanced mode: always allow Next from introspect (tables are reference only) --}}
+                <flux:button wire:click="nextStep" variant="primary">
+                    Next
+                </flux:button>
             @elseif($currentStep === 4 && count($selectedTables) > 0)
                 <flux:button wire:click="nextStep" variant="primary">
                     Next
                 </flux:button>
+            @elseif($currentStep === 5 && $wizardMode === 'advanced')
+                {{-- Advanced mode: only allow Next if SQL is validated --}}
+                @if($sqlValidated)
+                    <flux:button wire:click="nextStep" variant="primary">
+                        Next
+                    </flux:button>
+                @endif
             @elseif($currentStep !== 4)
                 <flux:button wire:click="nextStep" variant="primary">
                     Next

@@ -11,12 +11,15 @@ use App\Models\ApiSpec;
 use App\Models\ApiSpecTable;
 use App\Models\DataSource;
 use App\Services\ApiRuntime\ResourceNameSuggester;
+use App\Services\ApiRuntime\SqlQueryExecutor;
 use App\Services\Connectors\AbstractFileConnector;
 use App\Services\Connectors\ConnectorFactory;
 use App\Services\Introspectors\DatabaseIntrospector;
 use App\Services\Introspectors\FileIntrospector;
 use App\Services\PiiDetection\PiiDetectionService;
+use App\Services\SpecGenerator\SqlSpecGenerator;
 use App\Services\SpecGenerator\SpecRegenerationService;
+use App\Services\SqlValidator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -57,11 +60,29 @@ class ConnectWizard extends Component
 
     public array $generatedSpec = [];
 
+    // Advanced Mode (SQL) fields
+    public string $sqlQuery = '';
+
+    public string $endpointName = '';
+
+    public array $sqlValidationErrors = [];
+
+    public array $sqlResultColumns = [];
+
+    public array $sqlParameters = [];
+
+    public bool $sqlValidated = false;
+
     protected ?DataSource $dataSource = null;
 
     public function mount(): void
     {
         $this->authorize('create', DataSource::class);
+    }
+
+    protected function isAdvancedMode(): bool
+    {
+        return $this->wizardMode === 'advanced';
     }
 
     protected function isFileSource(): bool
@@ -83,6 +104,12 @@ class ConnectWizard extends Component
             2 => $this->isFileSource()
                 ? ['uploadedFile' => 'required|file|max:51200'] // 50MB max
                 : ['credentials.database' => 'required|string'],
+            5 => $this->isAdvancedMode()
+                ? [
+                    'sqlQuery' => 'required|string',
+                    'endpointName' => 'required|string|max:255|alpha_dash',
+                ]
+                : [],
             default => [],
         };
 
@@ -101,6 +128,16 @@ class ConnectWizard extends Component
             } elseif (! $this->connectionTested) {
                 $this->testConnection();
                 if (! $this->connectionTested) {
+                    return;
+                }
+            }
+        }
+
+        // Advanced Mode: validate SQL before proceeding past step 5
+        if ($this->currentStep === 5 && $this->isAdvancedMode()) {
+            if (! $this->sqlValidated) {
+                $this->validateSql();
+                if (! $this->sqlValidated) {
                     return;
                 }
             }
@@ -273,7 +310,14 @@ class ConnectWizard extends Component
     protected function runPiiScan(): void
     {
         $scanner = new PiiDetectionService;
-        $result = $scanner->scan($this->allColumnsForPii);
+
+        // Advanced mode: scan SQL result columns
+        if ($this->isAdvancedMode()) {
+            $columnNames = collect($this->sqlResultColumns)->pluck('name')->all();
+            $result = $scanner->scan($columnNames);
+        } else {
+            $result = $scanner->scan($this->allColumnsForPii);
+        }
 
         $this->piiResult = [
             'flagged' => array_values(array_unique($result->flagged)),
@@ -282,15 +326,128 @@ class ConnectWizard extends Component
         ];
     }
 
+    public function validateSql(): void
+    {
+        $validator = new SqlValidator;
+        $result = $validator->validate($this->sqlQuery);
+
+        if (! $result->valid) {
+            $this->sqlValidationErrors = $result->errors;
+            $this->sqlValidated = false;
+            $this->dispatch('toast', type: 'error', message: implode(' ', $result->errors), duration: 5000);
+
+            return;
+        }
+
+        $this->sqlValidationErrors = [];
+        $this->sqlParameters = $result->parameters;
+
+        // Dry-run to get result shape
+        try {
+            $this->dryRunSql();
+            $this->sqlValidated = true;
+            $this->dispatch('toast', type: 'success', message: 'SQL validated. '.count($this->sqlResultColumns).' result columns detected.', duration: 3000);
+        } catch (\Throwable $e) {
+            $this->sqlValidationErrors = ['Dry-run failed: '.$e->getMessage()];
+            $this->sqlValidated = false;
+            $this->dispatch('toast', type: 'error', message: 'Query dry-run failed: '.$e->getMessage(), duration: 5000);
+        }
+    }
+
+    protected function dryRunSql(): void
+    {
+        // Create a temporary DataSource to connect
+        $type = DataSourceType::from($this->type);
+        $tempSpec = new ApiSpec;
+        $tempSpec->id = 'dry-run-'.uniqid();
+
+        $tempDataSource = new DataSource;
+        $tempDataSource->type = $type;
+        $tempDataSource->credentials = $this->credentials;
+        $tempSpec->setRelation('dataSource', $tempDataSource);
+
+        $executor = app(SqlQueryExecutor::class);
+        $result = $executor->dryRun($tempSpec, $this->sqlQuery);
+
+        $this->sqlResultColumns = $result['columns'] ?? [];
+        $this->sqlParameters = $result['parameters'] ?? $this->sqlParameters;
+    }
+
+    public function updatedSqlQuery(): void
+    {
+        $this->sqlValidated = false;
+        $this->sqlValidationErrors = [];
+    }
+
     public function generateSpec(): void
     {
         $type = DataSourceType::from($this->type);
 
-        if ($this->isFileSource()) {
+        if ($this->isAdvancedMode()) {
+            $this->generateAdvancedSpec($type);
+        } elseif ($this->isFileSource()) {
             $this->generateFileSpec($type);
         } else {
             $this->generateDatabaseSpec($type);
         }
+    }
+
+    protected function generateAdvancedSpec(DataSourceType $type): void
+    {
+        $dataSource = DataSource::create([
+            'name' => $this->name,
+            'type' => $this->type,
+            'credentials' => $this->credentials,
+            'status' => ConnectionStatus::INTROSPECTED,
+            'user_id' => auth()->id(),
+            'metadata' => [],
+        ]);
+
+        // Store introspected schemas for reference
+        $connector = ConnectorFactory::make($type);
+        $connector->setUserId(auth()->id());
+        $connector->setDataSourceId($dataSource->id);
+        $connector->connect($this->credentials);
+
+        $introspector = new DatabaseIntrospector($connector);
+        $introspector->storeSchemas($dataSource);
+
+        $connector->disconnect();
+
+        $generator = app(SqlSpecGenerator::class);
+
+        $apiSpec = ApiSpec::create([
+            'user_id' => auth()->id(),
+            'data_source_id' => $dataSource->id,
+            'name' => $this->name,
+            'wizard_mode' => 'advanced',
+            'status' => 'pending',
+            'openapi_spec' => [],
+            'sql_query' => $this->sqlQuery,
+            'endpoint_name' => $this->endpointName,
+            'sql_parameters' => $this->sqlParameters,
+            'result_columns' => $this->sqlResultColumns,
+            'configuration' => [
+                'mode' => 'advanced',
+                'pii_excluded' => $this->piiResult['flagged'],
+                'pagination' => true,
+                'per_page' => 15,
+                'methods' => ['GET'],
+            ],
+        ]);
+
+        $spec = $generator->generate($apiSpec, [
+            'endpoint_name' => $this->endpointName,
+            'result_columns' => $this->sqlResultColumns,
+            'parameters' => $this->sqlParameters,
+        ]);
+
+        $apiSpec->update(['openapi_spec' => $spec]);
+
+        $this->generatedSpec = $spec;
+        $this->currentStep = 7;
+
+        $this->dispatch('toast', type: 'success', message: 'SQL endpoint spec generated.', duration: 3000);
     }
 
     protected function generateDatabaseSpec(DataSourceType $type): void
@@ -423,6 +580,11 @@ class ConnectWizard extends Component
     {
         $this->connectionTested = false;
         $this->uploadedFile = null;
+
+        // Reset to simple mode if switching to file source (Advanced not available for files)
+        if ($this->isFileSource() && $this->wizardMode === 'advanced') {
+            $this->wizardMode = 'simple';
+        }
     }
 
     public function render(): \Illuminate\View\View
