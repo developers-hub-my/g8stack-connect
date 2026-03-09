@@ -32,6 +32,7 @@ class Sidebar extends Base
         return [
             fn () => $this->createDashboardMenuItem(),
             fn () => $this->createNotificationsMenuItem(),
+            fn () => $this->createDocumentationMenuItem(),
         ];
     }
 
@@ -46,6 +47,20 @@ class Sidebar extends Base
             ->setIcon('gauge')
             ->setDescription(__('Access to your dashboard.'))
             ->setTooltip(__('Dashboard'))
+            ->setVisible(true);
+    }
+
+    /**
+     * Create the documentation menu item.
+     */
+    private function createDocumentationMenuItem(): MenuItem
+    {
+        return (new MenuItem)
+            ->setLabel(__('Documentation'))
+            ->setUrl(route('documentation'))
+            ->setIcon('book-open')
+            ->setDescription(__('User guide and documentation'))
+            ->setTooltip(__('Documentation'))
             ->setVisible(true);
     }
 
