@@ -22,6 +22,112 @@ The existing ConnectWizard handles file sources — no separate wizard. The flow
 6. **Step 6** — PII scan on all selected columns
 7. **Step 7** — Generate read-only API spec
 
+## Accepted File Structures
+
+### CSV
+
+Standard CSV with a **header row** as the first line.
+All subsequent rows are data.
+
+```csv
+name,email,department,salary,join_date,is_active
+Ahmad Hassan,ahmad@example.com,Engineering,5500.00,2024-01-15,true
+Siti Aminah,siti@example.com,Marketing,4800.50,2023-06-01,true
+Razak Ali,razak@example.com,Finance,6200.00,2022-11-20,false
+```
+
+Requirements:
+
+- First row **must** be column headers
+- Comma-delimited (standard CSV)
+- UTF-8 encoding recommended
+
+### JSON
+
+Two formats are accepted:
+
+**Format 1 — Top-level array of objects:**
+
+```json
+[
+  {
+    "name": "Ahmad Hassan",
+    "email": "ahmad@example.com",
+    "department": "Engineering",
+    "salary": 5500.00
+  },
+  {
+    "name": "Siti Aminah",
+    "email": "siti@example.com",
+    "department": "Marketing",
+    "salary": 4800.50
+  }
+]
+```
+
+**Format 2 — Wrapper object with array value:**
+
+```json
+{
+  "data": [
+    {
+      "sensor_id": "SENS-001",
+      "temperature": 28.5,
+      "humidity": 72.1,
+      "timestamp": "2024-01-15 08:30:00"
+    },
+    {
+      "sensor_id": "SENS-002",
+      "temperature": 31.2,
+      "humidity": 65.8,
+      "timestamp": "2024-01-15 08:30:00"
+    }
+  ]
+}
+```
+
+Requirements:
+
+- Valid JSON (UTF-8)
+- All objects must have consistent keys
+- Nested arrays/objects are flattened to JSON strings
+- The wrapper key can be any name (`data`, `results`,
+  `records`, etc.) — the connector finds the first
+  array-valued key automatically
+
+### Excel (.xlsx)
+
+Standard Excel workbook. Each **sheet** becomes a
+separate table.
+
+```text
+Sheet: "Employees"
+┌──────────────┬───────────────────────┬────────────┐
+│ name         │ email                 │ department │
+├──────────────┼───────────────────────┼────────────┤
+│ Ahmad Hassan │ ahmad@example.com     │ Engineering│
+│ Siti Aminah  │ siti@example.com      │ Marketing  │
+└──────────────┴───────────────────────┴────────────┘
+
+Sheet: "Departments"
+┌────────────┬──────────┬───────────┐
+│ name       │ code     │ head      │
+├────────────┼──────────┼───────────┤
+│ Engineering│ ENG      │ Dr. Lim   │
+│ Marketing  │ MKT      │ Puan Aida │
+└────────────┴──────────┴───────────┘
+```
+
+Requirements:
+
+- `.xlsx` format (not `.xls`)
+- First row of each sheet **must** be column headers
+- Sheets with fewer than 2 rows (header + 1 data) are
+  skipped
+- Empty column headers are excluded
+- Sheet names become table names (converted to
+  snake_case: `"My Sheet"` → `my_sheet`)
+
 ## DataSourceType Helpers
 
 ```php
