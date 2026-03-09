@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\ApiRuntime;
 
-use App\DataTransferObjects\SqlValidationResult;
 use App\Models\ApiSpec;
 use App\Services\SqlValidator;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 
 class SqlQueryExecutor
 {

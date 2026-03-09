@@ -188,7 +188,7 @@ it('rejects empty query', function () {
 });
 
 it('rejects query exceeding max length', function () {
-    $result = $this->validator->validate('SELECT ' . str_repeat('a', 10_001));
+    $result = $this->validator->validate('SELECT '.str_repeat('a', 10_001));
 
     expect($result->valid)->toBeFalse()
         ->and(implode(' ', $result->errors))->toContain('maximum length');
@@ -208,7 +208,7 @@ it('handles SQL comments safely', function () {
 });
 
 it('handles multi-line comments safely', function () {
-    $result = $this->validator->validate("SELECT * FROM users /* DROP TABLE users */ WHERE id = 1");
+    $result = $this->validator->validate('SELECT * FROM users /* DROP TABLE users */ WHERE id = 1');
 
     expect($result->valid)->toBeTrue();
 });
