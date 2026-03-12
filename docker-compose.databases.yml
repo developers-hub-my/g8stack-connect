@@ -1,6 +1,26 @@
 version: "3.7"
 
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: g8-mysql
+    ports:
+      - "${G8_MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: g8test
+      MYSQL_USER: g8test
+      MYSQL_PASSWORD: g8testpass
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/seeds/mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
   postgres:
     image: postgres:16-alpine
     container_name: g8-postgres
@@ -74,6 +94,8 @@ services:
     restart: unless-stopped
 
 volumes:
+  mysql-data:
+    driver: local
   pg-data:
     driver: local
   mssql-data:

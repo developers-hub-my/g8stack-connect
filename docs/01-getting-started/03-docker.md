@@ -35,18 +35,20 @@ departments, projects tables).
 
 | Service    | Port | Credentials                  |
 | ---------- | ---- | ---------------------------- |
+| MySQL      | 3306 | db=g8test user=g8test        |
 | PostgreSQL | 5432 | db=g8test user=g8test        |
 | MSSQL      | 1433 | db=g8test user=sa            |
 | Oracle     | 1521 | db=FREEPDB1 user=g8test      |
 
 Images used:
 
+- MySQL: `mysql:8.0`
 - PostgreSQL: `postgres:16-alpine`
 - MSSQL: `mcr.microsoft.com/mssql/server:2022-latest`
 - Oracle: `gvenzl/oracle-free:slim`
 
-> MySQL connector testing uses the app's own MySQL
-> from `docker-compose.yml` (port 3306).
+> App database runs locally (not Docker). These are
+> dedicated test data sources only.
 
 ```bash
 # Start test databases
@@ -115,6 +117,7 @@ MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadmin
 
 # Test Database Ports
+G8_MYSQL_PORT=3306
 G8_PG_PORT=5432
 G8_MSSQL_PORT=1433
 G8_ORACLE_PORT=1521

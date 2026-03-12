@@ -6,9 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "Stopping and removing test database containers and volumes..."
-docker compose -f docker-compose.yml -f docker-compose.databases.yml down -v --remove-orphans
+docker compose -f docker-compose.databases.yml down -v --remove-orphans
 
 echo "Starting fresh test databases..."
-docker compose -f docker-compose.yml -f docker-compose.databases.yml up -d postgres mssql oracle mssql-init
+docker compose -f docker-compose.databases.yml up -d mysql postgres mssql oracle mssql-init
 
 echo "Test databases reset complete."

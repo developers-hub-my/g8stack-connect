@@ -5,13 +5,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "Starting test databases (PostgreSQL, MySQL, MSSQL, Oracle)..."
-docker compose -f docker-compose.yml -f docker-compose.databases.yml up -d postgres mssql oracle mssql-init
+echo "Starting test databases (MySQL, PostgreSQL, MSSQL, Oracle)..."
+docker compose -f docker-compose.databases.yml up -d mysql postgres mssql oracle mssql-init
 
 echo ""
 echo "Connection details:"
 echo "  PostgreSQL  → 127.0.0.1:${G8_PG_PORT:-5432}         db=g8test  user=g8test  pass=g8testpass"
-echo "  MySQL       → uses app DB (docker-compose.yml port ${DB_PORT:-3306})"
+echo "  MySQL       → 127.0.0.1:${G8_MYSQL_PORT:-3306}         db=g8test  user=g8test  pass=g8testpass"
 echo "  MSSQL       → 127.0.0.1:${G8_MSSQL_PORT:-1433}       db=g8test  user=sa      pass=G8test@Pass1"
 echo "  Oracle      → 127.0.0.1:${G8_ORACLE_PORT:-1521}       db=FREEPDB1  user=g8test  pass=g8testpass"
 echo ""

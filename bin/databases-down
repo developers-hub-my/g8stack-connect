@@ -6,4 +6,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "Stopping test databases..."
-docker compose -f docker-compose.yml -f docker-compose.databases.yml stop postgres mssql oracle
+docker compose -f docker-compose.databases.yml stop mysql postgres mssql oracle
