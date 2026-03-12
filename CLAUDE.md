@@ -587,6 +587,8 @@ class ConnectDataSource extends Component
 
 ## Docker Services
 
+### Core Services (`docker-compose.yml`)
+
 | Service     | Port(s)        | Description              |
 | ----------- | -------------- | ------------------------ |
 | MySQL       | 3306           | Database server          |
@@ -595,11 +597,30 @@ class ConnectDataSource extends Component
 | Meilisearch | 7700           | Full-text search engine  |
 | MinIO       | 9000, 9001     | S3-compatible storage    |
 
+### Test Databases (`docker-compose.databases.yml`)
+
+| Service     | Port(s)  | Image                              | Credentials                        |
+| ----------- | -------- | ---------------------------------- | ---------------------------------- |
+| PostgreSQL  | 5432     | `postgres:16-alpine`               | db=g8test user=g8test pass=g8testpass |
+| MSSQL       | 1433     | `mcr.microsoft.com/mssql/server:2022-latest` | db=g8test user=sa pass=G8test@Pass1 |
+| Oracle      | 1521     | `gvenzl/oracle-free:slim`          | db=FREEPDB1 user=g8test pass=g8testpass |
+
+> MySQL connector testing uses the app's own MySQL from `docker-compose.yml` (port 3306).
+
 ```bash
+# Core services
 docker compose up -d
 docker compose down
 docker compose logs -f
+
+# Test databases (for connector testing)
+bin/databases-up        # Start all test databases
+bin/databases-down      # Stop test databases
+bin/databases-reset     # Reset with fresh seed data
 ```
+
+> **Gotcha:** MSSQL image is `linux/amd64` only. On Apple Silicon it runs via Rosetta emulation
+> (slower but functional). Oracle takes 60-90s to initialize on first run.
 
 Access points:
 - **Mailpit UI**: http://localhost:8025
@@ -635,6 +656,11 @@ MAILPIT_UI_PORT=8025
 MEILI_MASTER_KEY=masterKey
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadmin
+
+# Test Database Ports (docker-compose.databases.yml)
+G8_PG_PORT=5432
+G8_MSSQL_PORT=1433
+G8_ORACLE_PORT=1521
 ```
 
 ---

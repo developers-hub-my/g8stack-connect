@@ -1,0 +1,82 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: g8-postgres
+    ports:
+      - "${G8_PG_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: g8test
+      POSTGRES_USER: g8test
+      POSTGRES_PASSWORD: g8testpass
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./docker/seeds/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U g8test"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: g8-mssql
+    ports:
+      - "${G8_MSSQL_PORT:-1433}:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "G8test@Pass1"
+      MSSQL_PID: "Developer"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./docker/seeds/mssql:/seeds
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'G8test@Pass1' -C -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: g8-mssql-init
+    depends_on:
+      mssql:
+        condition: service_healthy
+    volumes:
+      - ./docker/seeds/mssql:/seeds
+    entrypoint: ["/bin/bash", "/seeds/setup.sh"]
+    restart: "no"
+
+  oracle:
+    image: gvenzl/oracle-free:slim
+    container_name: g8-oracle
+    ports:
+      - "${G8_ORACLE_PORT:-1521}:1521"
+    environment:
+      ORACLE_PASSWORD: g8testpass
+      APP_USER: g8test
+      APP_USER_PASSWORD: g8testpass
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./docker/seeds/oracle:/container-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+    driver: local
+  mssql-data:
+    driver: local
+  oracle-data:
+    driver: local
