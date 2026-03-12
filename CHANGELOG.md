@@ -5,6 +5,18 @@ All notable changes to G8Connect will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.1 - 2026-03-12
+
+### G8Connect 1.0.1
+
+Patch release with documentation and badge fixes.
+
+#### Fixed
+
+- Fix 6 broken documentation links in README.md — point to correct numbered folder structure
+- Update CI badges to shields.io `flat-square` style
+- Add Tier 1 badges (version, license) per documentation standards
+
 ## 1.0.0 - 2026-03-12
 
 ### G8Connect 1.0.0
