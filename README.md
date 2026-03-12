@@ -7,11 +7,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/g8stack/connect/actions/workflows/run-tests.yml"><img src="https://github.com/g8stack/connect/actions/workflows/run-tests.yml/badge.svg" alt="Test" /></a>
-  <a href="https://github.com/g8stack/connect/actions/workflows/rector.yml"><img src="https://github.com/g8stack/connect/actions/workflows/rector.yml/badge.svg" alt="Rector CI" /></a>
-  <a href="https://github.com/g8stack/connect/actions/workflows/phpstan.yml"><img src="https://github.com/g8stack/connect/actions/workflows/phpstan.yml/badge.svg" alt="PHPStan" /></a>
-  <a href="https://github.com/g8stack/connect/actions/workflows/lint.yml"><img src="https://github.com/g8stack/connect/actions/workflows/lint.yml/badge.svg" alt="PHP Linting (Pint)" /></a>
-  <a href="https://github.com/g8stack/connect/actions/workflows/update-changelog.yml"><img src="https://github.com/g8stack/connect/actions/workflows/update-changelog.yml/badge.svg" alt="Update Changelog" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/run-tests.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/run-tests.yml/badge.svg" alt="Test" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/rector.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/rector.yml/badge.svg" alt="Rector CI" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/phpstan.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/phpstan.yml/badge.svg" alt="PHPStan" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/lint.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/lint.yml/badge.svg" alt="PHP Linting (Pint)" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/update-changelog.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/update-changelog.yml/badge.svg" alt="Update Changelog" /></a>
 </p>
 
 # G8Connect
@@ -41,8 +41,8 @@ If you discover a security vulnerability within G8Connect, please send an e-mail
 
 ## Contributors
 
-<a href="https://github.com/g8stack/connect/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=g8stack/connect" alt="G8Connect Contributors" />
+<a href="https://github.com/developers-hub-my/g8stack-connect/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=developers-hub-my/g8stack-connect" alt="G8Connect Contributors" />
 </a>
 
 ## License
