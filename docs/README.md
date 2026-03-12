@@ -28,6 +28,7 @@ Building features and working with the codebase:
 - [Sidebar Navigation](02-development/09-sidebar.md) - Menu configuration
 - [Toast Notifications](02-development/10-toast-notifications.md) - User notifications
 - [File Source Connectors](02-development/11-file-connectors.md) - CSV, JSON, Excel data sources
+- [SQL Mode](02-development/12-sql-mode.md) - Advanced mode with SQL queries
 
 ### Architecture
 
