@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ApiSpec;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'verified'])
@@ -32,7 +33,7 @@ Route::middleware(['auth:sanctum', 'verified'])
         })->name('configure');
 
         Route::get('/{uuid}/preview', function (string $uuid) {
-            $apiSpec = \App\Models\ApiSpec::where('uuid', $uuid)->firstOrFail();
+            $apiSpec = ApiSpec::where('uuid', $uuid)->firstOrFail();
 
             abort_unless(auth()->user()->can('view', $apiSpec), 403);
 
@@ -40,7 +41,7 @@ Route::middleware(['auth:sanctum', 'verified'])
         })->name('preview');
 
         Route::get('/{uuid}/spec.json', function (string $uuid) {
-            $apiSpec = \App\Models\ApiSpec::where('uuid', $uuid)->firstOrFail();
+            $apiSpec = ApiSpec::where('uuid', $uuid)->firstOrFail();
 
             abort_unless(auth()->user()->can('view', $apiSpec), 403);
 

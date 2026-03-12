@@ -20,6 +20,7 @@ use App\Services\PiiDetection\PiiDetectionService;
 use App\Services\SpecGenerator\SpecRegenerationService;
 use App\Services\SpecGenerator\SqlSpecGenerator;
 use App\Services\SqlValidator;
+use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -680,7 +681,7 @@ class ConnectWizard extends Component
         }
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.data-source.connect-wizard');
     }

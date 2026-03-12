@@ -10,6 +10,7 @@ use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
 use App\Settings\NotificationSettings;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class Show extends Component
@@ -139,7 +140,7 @@ class Show extends Component
         }
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.admin.settings.show');
     }

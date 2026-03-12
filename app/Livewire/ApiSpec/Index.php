@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\ApiSpec;
 
 use App\Models\ApiSpec;
+use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -31,7 +32,7 @@ class Index extends Component
         $this->authorize('viewAny', ApiSpec::class);
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $query = ApiSpec::query()
             ->where('user_id', auth()->id())

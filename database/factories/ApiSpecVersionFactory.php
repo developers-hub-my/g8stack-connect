@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\ApiSpec;
+use App\Models\ApiSpecVersion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ApiSpecVersion>
+ * @extends Factory<ApiSpecVersion>
  */
 class ApiSpecVersionFactory extends Factory
 {

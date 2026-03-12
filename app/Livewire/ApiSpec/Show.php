@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\ApiSpec;
 
 use App\Models\ApiSpec;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class Show extends Component
@@ -17,7 +18,7 @@ class Show extends Component
         $this->authorize('view', $this->apiSpec);
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.api-spec.show', [
             'versions' => $this->apiSpec->versions,

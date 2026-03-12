@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\ApiSpec;
 
 use App\Models\ApiSpec;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class VersionHistory extends Component
@@ -24,7 +25,7 @@ class VersionHistory extends Component
         $this->selectedVersion = $versionNumber;
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $versions = $this->apiSpec->versions;
         $currentVersion = $this->selectedVersion

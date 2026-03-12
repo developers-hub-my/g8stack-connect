@@ -4,11 +4,12 @@ namespace Database\Factories;
 
 use App\Enums\ConnectionStatus;
 use App\Enums\DataSourceType;
+use App\Models\DataSource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DataSource>
+ * @extends Factory<DataSource>
  */
 class DataSourceFactory extends Factory
 {

@@ -3,10 +3,11 @@
 namespace Database\Factories;
 
 use App\Models\ApiSpec;
+use App\Models\ApiSpecField;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ApiSpecField>
+ * @extends Factory<ApiSpecField>
  */
 class ApiSpecFieldFactory extends Factory
 {

@@ -12,6 +12,7 @@ use App\Models\DataSourceSchema;
 use App\Services\PiiDetection\PiiDetectionService;
 use App\Services\SpecGenerator\SpecRegenerationService;
 use App\Services\SpecVersioning\SpecVersioningService;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class GuidedConfigWizard extends Component
@@ -212,7 +213,7 @@ class GuidedConfigWizard extends Component
         $this->alert('Success', "Configuration saved for {$currentTable->resource_name}.");
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.data-source.guided-config-wizard', [
             'tables' => $this->apiSpec->tables()->get(),

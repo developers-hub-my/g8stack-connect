@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\ApiRuntime;
 
 use App\Models\ApiSpec;
+use App\Services\PiiDetection\PiiDetectionService;
+use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 
@@ -108,7 +110,7 @@ class ApiQueryService
             ->delete() > 0;
     }
 
-    protected function connect(ApiSpec $spec): \Illuminate\Database\Connection
+    protected function connect(ApiSpec $spec): Connection
     {
         $dataSource = $spec->dataSource;
         $credentials = $dataSource->credentials;
@@ -195,7 +197,7 @@ class ApiQueryService
             return ['*'];
         }
 
-        $piiScanner = new \App\Services\PiiDetection\PiiDetectionService;
+        $piiScanner = new PiiDetectionService;
         $columnNames = collect($schema->columns)->pluck('name')->all();
         $piiResult = $piiScanner->scan($columnNames);
 

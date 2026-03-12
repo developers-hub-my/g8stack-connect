@@ -9,7 +9,7 @@ use App\Models\ApiSpecKey;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ApiSpecKey>
+ * @extends Factory<ApiSpecKey>
  */
 class ApiSpecKeyFactory extends Factory
 {

@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -44,7 +45,7 @@ class ApiRateLimiter
 
         $response = $next($request);
 
-        if ($response instanceof \Illuminate\Http\JsonResponse || $response instanceof \Illuminate\Http\Response) {
+        if ($response instanceof JsonResponse || $response instanceof \Illuminate\Http\Response) {
             $response->headers->set('X-RateLimit-Limit', (string) $rateLimit);
             $response->headers->set('X-RateLimit-Remaining', (string) $this->limiter->remaining($key, $rateLimit));
         }

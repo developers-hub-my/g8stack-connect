@@ -6,6 +6,7 @@ namespace App\Services\ApiRuntime;
 
 use App\Models\ApiSpec;
 use App\Models\ApiSpecTable;
+use Illuminate\Support\Collection;
 
 class ApiResponseTransformer
 {
@@ -107,7 +108,7 @@ class ApiResponseTransformer
             ->all();
     }
 
-    protected function resolveFields(ApiSpec $spec, ?ApiSpecTable $table): \Illuminate\Support\Collection
+    protected function resolveFields(ApiSpec $spec, ?ApiSpecTable $table): Collection
     {
         if ($table && $table->exists) {
             $tableFields = $table->fields;

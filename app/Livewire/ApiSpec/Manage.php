@@ -12,6 +12,7 @@ use App\Models\ApiSpecTable;
 use App\Models\DataSource;
 use App\Services\ApiRuntime\ResourceNameSuggester;
 use App\Services\SpecGenerator\SpecRegenerationService;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class Manage extends Component
@@ -298,7 +299,7 @@ class Manage extends Component
         return array_unique($methods);
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.api-spec.manage', [
             'dataSources' => DataSource::orderBy('name')->get(),

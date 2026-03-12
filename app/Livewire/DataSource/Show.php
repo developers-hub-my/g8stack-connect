@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\DataSource;
 
 use App\Models\DataSource;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class Show extends Component
@@ -17,7 +18,7 @@ class Show extends Component
         $this->authorize('view', $this->dataSource);
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.data-source.show', [
             'schemas' => $this->dataSource->schemas,

@@ -4,12 +4,13 @@ namespace Database\Factories;
 
 use App\Enums\SpecStatus;
 use App\Enums\WizardMode;
+use App\Models\ApiSpec;
 use App\Models\DataSource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ApiSpec>
+ * @extends Factory<ApiSpec>
  */
 class ApiSpecFactory extends Factory
 {
