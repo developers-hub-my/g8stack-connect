@@ -7,10 +7,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/run-tests.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/run-tests.yml/badge.svg" alt="Test" /></a>
-  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/rector.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/rector.yml/badge.svg" alt="Rector CI" /></a>
-  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/lint.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/lint.yml/badge.svg" alt="PHP Linting (Pint)" /></a>
-  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/update-changelog.yml"><img src="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/update-changelog.yml/badge.svg" alt="Update Changelog" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/releases"><img src="https://img.shields.io/github/v/release/developers-hub-my/g8stack-connect?style=flat-square" alt="Latest Version" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/developers-hub-my/g8stack-connect?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/run-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/developers-hub-my/g8stack-connect/run-tests.yml?style=flat-square&label=tests" alt="Tests" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/rector.yml"><img src="https://img.shields.io/github/actions/workflow/status/developers-hub-my/g8stack-connect/rector.yml?style=flat-square&label=rector" alt="Rector CI" /></a>
+  <a href="https://github.com/developers-hub-my/g8stack-connect/actions/workflows/lint.yml"><img src="https://img.shields.io/github/actions/workflow/status/developers-hub-my/g8stack-connect/lint.yml?style=flat-square&label=pint" alt="PHP Linting (Pint)" /></a>
 </p>
 
 # G8Connect
@@ -19,12 +20,13 @@
 
 ## Documentation
 
-- [Installation](docs/installation.md)
-- [Development](docs/development.md)
-  - [Code Quality](docs/code-quality.md)
-  - [Secure File Access](docs/secure-file-access.md)
-  - [Upload Helper](docs/upload-helper.md)
-- [Deployment](docs/deployment.md)
+- [Getting Started](docs/01-getting-started/01-installation.md)
+- [Development](docs/02-development/README.md)
+  - [Code Quality](docs/03-architecture/01-code-quality.md)
+  - [Secure File Access](docs/02-development/08-secure-file-access.md)
+  - [Upload Helper](docs/02-development/07-upload-helper.md)
+- [Deployment](docs/04-deployment/01-deployment.md)
+- [Full Documentation](docs/README.md)
 
 ## Contributing
 
