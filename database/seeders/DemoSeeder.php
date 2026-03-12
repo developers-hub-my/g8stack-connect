@@ -16,6 +16,8 @@ use App\Models\DataSourceSchema;
 use App\Models\User;
 use App\Services\SpecGenerator\SpecRegenerationService;
 use Illuminate\Database\Seeder;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DemoSeeder extends Seeder
 {
@@ -296,8 +298,8 @@ class DemoSeeder extends Seeder
         file_put_contents("{$dir}/employees.json", json_encode($json, JSON_PRETTY_PRINT));
 
         // Excel — create a simple XLSX using PhpSpreadsheet
-        if (class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        if (class_exists(Spreadsheet::class)) {
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('employees');
 
@@ -320,7 +322,7 @@ class DemoSeeder extends Seeder
                 }
             }
 
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer = new Xlsx($spreadsheet);
             $writer->save("{$dir}/employees.xlsx");
         } else {
             $this->command->warn('  ⚠ PhpSpreadsheet not installed — skipping Excel demo file.');
