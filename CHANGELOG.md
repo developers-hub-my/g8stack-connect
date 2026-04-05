@@ -5,6 +5,34 @@ All notable changes to G8Connect will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.0 - 2026-04-05
+
+### Oracle Database Connector Support
+
+Add Oracle as a fully supported data source type in G8Connect, completing the database connector lineup.
+
+#### What's New
+
+- **OracleConnector** — connect, introspect, and preview Oracle databases via `yajra/laravel-oci8`
+- **Service Name / SID support** — credential form supports both connection methods
+- **Schema filtering** — automatically filters to connected user's schema, excluding system tables
+- **8 Pest tests** — 7 unit tests + 1 integration test (requires Oracle Docker)
+- **Updated docs** — connector architecture, installation prerequisites, roadmap, decision log, and CLAUDE.md
+
+#### Files Changed
+
+- `app/Services/Connectors/OracleConnector.php` (new)
+- `app/Enums/DataSourceType.php` — added `ORACLE` case
+- `app/Services/Connectors/ConnectorFactory.php` — registered Oracle
+- `app/Services/Connectors/AbstractDatabaseConnector.php` — Oracle schema filter
+- `app/Livewire/DataSource/ConnectWizard.php` — added `service_name` credential
+- `resources/views/livewire/data-source/connect-wizard.blade.php` — Oracle UI fields
+- `composer.json` — added `yajra/laravel-oci8`
+
+Closes #2
+
+**Full Changelog**: https://github.com/developers-hub-my/g8stack-connect/compare/1.0.1...1.1.0
+
 ## 1.0.1 - 2026-03-12
 
 ### G8Connect 1.0.1
