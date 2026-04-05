@@ -15,6 +15,7 @@ enum DataSourceType: string implements Contract
     case MYSQL = 'mysql';
     case MSSQL = 'mssql';
     case SQLITE = 'sqlite';
+    case ORACLE = 'oracle';
     case CSV = 'csv';
     case JSON = 'json';
     case EXCEL = 'excel';
@@ -26,6 +27,7 @@ enum DataSourceType: string implements Contract
             self::MYSQL => 'MySQL',
             self::MSSQL => 'Microsoft SQL Server',
             self::SQLITE => 'SQLite',
+            self::ORACLE => 'Oracle Database',
             self::CSV => 'CSV File',
             self::JSON => 'JSON File',
             self::EXCEL => 'Excel File',
@@ -39,6 +41,7 @@ enum DataSourceType: string implements Contract
             self::MYSQL => 'Connect to a MySQL database server.',
             self::MSSQL => 'Connect to a Microsoft SQL Server database.',
             self::SQLITE => 'Connect to a SQLite database file.',
+            self::ORACLE => 'Connect to an Oracle database server.',
             self::CSV => 'Upload a CSV file as a read-only data source.',
             self::JSON => 'Upload a JSON file as a read-only data source.',
             self::EXCEL => 'Upload an Excel (.xlsx) file as a read-only data source.',

@@ -22,7 +22,8 @@ DataSourceConnector (contract)
 │   ├── PostgresConnector
 │   ├── MySqlConnector
 │   ├── MssqlConnector
-│   └── SqliteConnector
+│   ├── SqliteConnector
+│   └── OracleConnector
 └── AbstractFileConnector
     ├── CsvConnector
     ├── JsonConnector
@@ -46,6 +47,16 @@ DataSourceConnector (contract)
 | MSSQL | Database name | `getDatabaseName()` |
 | PostgreSQL | Schema name (e.g. `public`) | Connection `schema` config |
 | SQLite | `main` | Hardcoded filter |
+| Oracle | Owner/schema name | Connected username (case-insensitive) |
+
+### OracleConnector
+
+- Uses `yajra/laravel-oci8` (OCI8 extension, not PDO)
+- Driver name: `oracle`
+- Default port: `1521`, charset: `AL32UTF8`
+- Supports both **Service Name** (preferred) and **SID** via the `service_name` credential field
+- Schema filtering matches the connected user's schema (owner) case-insensitively
+- `yajra/laravel-oci8` returns lowercase table/column names despite Oracle's native uppercase convention
 
 ## File Connectors (v0.3)
 

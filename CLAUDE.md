@@ -90,7 +90,7 @@ complexity is abstracted per user type.
 ### Data Source Roadmap by Phase
 
 **v0.1–v0.2 (DB sources)**
-- PostgreSQL, MySQL, MSSQL, SQLite
+- PostgreSQL, MySQL, MSSQL, SQLite, Oracle
 
 **v0.3 (File sources)**
 - CSV, JSON, Excel (.xlsx)
@@ -301,6 +301,7 @@ enum DataSourceType: string implements Contract
     case MYSQL = 'mysql';
     case MSSQL = 'mssql';
     case SQLITE = 'sqlite';
+    case ORACLE = 'oracle';
     case CSV = 'csv';
     case JSON = 'json';
     case EXCEL = 'excel';
@@ -611,6 +612,7 @@ php artisan flux:icon pencil trash-2 eye ellipsis plus
 - **owen-it/laravel-auditing**: Audit trail (critical — every connection logged)
 - **cleaniquecoders/traitify**: Common traits and contracts
 - **cleaniquecoders/laravel-api-version**: Header-based API versioning (not URI-based)
+- **yajra/laravel-oci8**: Oracle database driver for Laravel (uses OCI8 extension, not PDO)
 
 ### Development
 
@@ -744,6 +746,24 @@ Before committing:
 - [ ] `composer test` passes
 
 ## Gotchas
+
+### Oracle Database
+
+> **Gotcha:** Oracle's `Schema::getTables()` returns tables from ALL accessible schemas. The
+> `OracleConnector` filters by the connected user's schema (owner, uppercased). System schemas
+> (`SYS`, `SYSTEM`, `MDSYS`, `CTXSYS`, etc.) are excluded automatically.
+
+> **Gotcha:** Although Oracle natively uppercases identifiers, `yajra/laravel-oci8`'s
+> `Schema::getTables()` returns **lowercase** names and schemas. The schema filter in
+> `AbstractDatabaseConnector::introspect()` uses case-insensitive comparison for Oracle.
+
+> **Gotcha:** Oracle uses **Service Name** (modern) or **SID** (legacy) for connections. The
+> credential form has a "Service Name" field. The `OracleConnector` maps `service_name` to both
+> `database` and `service_name` config keys. If `service_name` is empty, it falls back to
+> `database`.
+
+> **Gotcha:** `yajra/laravel-oci8` uses PHP's `oci8` extension directly, NOT PDO. The `pdo_oci`
+> driver is not required. Verify OCI8 is installed with `php -m | grep oci8`.
 
 ### Livewire 4
 

@@ -129,12 +129,17 @@
             @else
                 <flux:heading size="lg">Connection Credentials</flux:heading>
 
-                @if(in_array($type, ['mysql', 'postgresql', 'mssql']))
+                @if(in_array($type, ['mysql', 'postgresql', 'mssql', 'oracle']))
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <flux:input label="Host" wire:model="credentials.host" placeholder="127.0.0.1" />
-                        <flux:input label="Port" wire:model="credentials.port" placeholder="{{ $type === 'postgresql' ? '5432' : ($type === 'mssql' ? '1433' : '3306') }}" />
+                        <flux:input label="Port" wire:model="credentials.port" placeholder="{{ match($type) { 'postgresql' => '5432', 'mssql' => '1433', 'oracle' => '1521', default => '3306' } }}" />
                     </div>
-                    <flux:input label="Database" wire:model="credentials.database" placeholder="my_database" />
+                    @if($type === 'oracle')
+                        <flux:input label="Service Name" wire:model="credentials.service_name" placeholder="FREEPDB1" />
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">The Oracle service name (or SID) to connect to.</p>
+                    @else
+                        <flux:input label="Database" wire:model="credentials.database" placeholder="my_database" />
+                    @endif
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <flux:input label="Username" wire:model="credentials.username" placeholder="readonly_user" />
                         <flux:input label="Password" wire:model="credentials.password" type="password" />

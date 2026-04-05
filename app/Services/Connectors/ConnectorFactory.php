@@ -16,6 +16,7 @@ class ConnectorFactory
             DataSourceType::POSTGRESQL => new PostgresConnector,
             DataSourceType::MSSQL => new MssqlConnector,
             DataSourceType::SQLITE => new SqliteConnector,
+            DataSourceType::ORACLE => new OracleConnector,
             DataSourceType::CSV => new CsvConnector,
             DataSourceType::JSON => new JsonConnector,
             DataSourceType::EXCEL => new ExcelConnector,

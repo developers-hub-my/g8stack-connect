@@ -4,6 +4,7 @@ use App\Enums\DataSourceType;
 use App\Services\Connectors\ConnectorFactory;
 use App\Services\Connectors\MssqlConnector;
 use App\Services\Connectors\MySqlConnector;
+use App\Services\Connectors\OracleConnector;
 use App\Services\Connectors\PostgresConnector;
 use App\Services\Connectors\SqliteConnector;
 
@@ -29,6 +30,12 @@ it('resolves sqlite connector', function () {
     $connector = ConnectorFactory::make(DataSourceType::SQLITE);
 
     expect($connector)->toBeInstanceOf(SqliteConnector::class);
+});
+
+it('resolves oracle connector', function () {
+    $connector = ConnectorFactory::make(DataSourceType::ORACLE);
+
+    expect($connector)->toBeInstanceOf(OracleConnector::class);
 });
 
 it('can connect to sqlite in memory', function () {

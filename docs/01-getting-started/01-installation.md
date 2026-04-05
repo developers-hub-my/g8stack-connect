@@ -8,12 +8,13 @@ This documentation provides step-by-step instructions to install and configure t
 
 Make sure you have the following installed and configured on your system:
 
-1. **PHP**: Version compatible with Laravel.
+1. **PHP**: Version 8.4+ compatible with Laravel 12.
 2. **Composer**: For managing PHP dependencies.
 3. **MySQL/MariaDB**: For database management.
 4. **Node.js and npm**: For frontend dependencies and build.
 5. **Git**: For version control.
 6. **Supervisor**: For process management (if needed).
+7. **PHP OCI8 extension** (optional): Required for Oracle database connector support. Install via `pecl install oci8` and ensure Oracle Instant Client libraries are available. Verify with `php -m | grep oci8`.
 
 ---
 

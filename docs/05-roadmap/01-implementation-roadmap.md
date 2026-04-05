@@ -49,7 +49,7 @@ gantt
 
 - Project scaffolding (Laravel 12, Livewire, roles/permissions, Keycloak SSO skeleton)
 - `DataSource` model — store connection config (type, `encrypted:array` credentials)
-- Connectors: **PostgreSQL**, **MySQL**, **MSSQL**, **SQLite**
+- Connectors: **PostgreSQL**, **MySQL**, **MSSQL**, **SQLite**, **Oracle**
 - Introspection: read tables, columns, data types (per-driver schema filtering)
 - Simple Mode wizard:
   - Step 1: Connect (type, credentials, validate)
@@ -68,6 +68,7 @@ app/Services/Connectors/PostgresConnector.php
 app/Services/Connectors/MySqlConnector.php
 app/Services/Connectors/MssqlConnector.php
 app/Services/Connectors/SqliteConnector.php
+app/Services/Connectors/OracleConnector.php
 app/Services/Connectors/ConnectorFactory.php
 app/Services/Connectors/AbstractDatabaseConnector.php
 app/Services/Introspectors/DatabaseIntrospector.php
@@ -89,7 +90,7 @@ app/Policies/ApiSpecPolicy.php
 
 ### Exit Criteria
 
-- [x] All four DB connectors connect and introspect successfully
+- [x] All five DB connectors connect and introspect successfully (PostgreSQL, MySQL, MSSQL, SQLite, Oracle)
 - [x] Simple Mode wizard generates valid OpenAPI 3.1 spec
 - [x] PII columns auto-flagged and excluded from spec
 - [x] Audit log records every connection attempt
@@ -632,7 +633,7 @@ graph LR
 
 | Phase | Sources |
 |---|---|
-| v0.1-v0.2 | PostgreSQL, MySQL, MSSQL, SQLite |
+| v0.1-v0.2 | PostgreSQL, MySQL, MSSQL, SQLite, Oracle |
 | v0.3 | CSV, JSON, Excel (.xlsx) |
 | Post-v1.0 | MongoDB, Redis, XML, Parquet, REST/SOAP, S3/MinIO, Google Sheets, SFTP |
 

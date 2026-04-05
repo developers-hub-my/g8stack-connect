@@ -21,6 +21,8 @@ Key architectural and product decisions for G8Connect, with rationale documented
 | 13 | Scalar API Reference for spec rendering | CDN-based Scalar viewer in standalone page, embedded via iframe to avoid Livewire/Alpine conflicts | v0.2 |
 | 14 | No Flux Pro features | Flux UI tabs (`flux:tab.group`) are Pro-only; use Alpine.js x-data/x-show tabs with URL deep linking instead | v0.2 |
 | 15 | API key management handled by gateway | Key generation/revocation is Kong's responsibility, not G8Connect's; G8Connect generates specs, gateway handles runtime auth | v0.2.2 |
+| 16 | Oracle via yajra/laravel-oci8, not PDO | PHP `pdo_oci` is rarely available; `oci8` extension + yajra package provides full Laravel DB driver compatibility | v0.1 |
+| 17 | Oracle schema filter by username | Oracle returns all accessible schemas; filter to connected user's schema (owner) to exclude SYS/SYSTEM tables | v0.1 |
 
 ## Architecture Decision Records
 

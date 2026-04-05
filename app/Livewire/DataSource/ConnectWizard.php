@@ -41,6 +41,7 @@ class ConnectWizard extends Component
         'host' => '',
         'port' => '',
         'database' => '',
+        'service_name' => '',
         'username' => '',
         'password' => '',
     ];

@@ -83,7 +83,7 @@ abstract class AbstractDatabaseConnector implements DataSourceConnector
                 ?? null;
 
             $tableNames = collect($tables)
-                ->filter(function ($table) use ($databaseName, $driver, $searchSchema) {
+                ->filter(function ($table) use ($connection, $databaseName, $driver, $searchSchema) {
                     if (! isset($table['schema'])) {
                         return true;
                     }
@@ -95,6 +95,13 @@ abstract class AbstractDatabaseConnector implements DataSourceConnector
                     // PostgreSQL: filter by schema (e.g. 'public'), not database name
                     if ($driver === 'pgsql') {
                         return $table['schema'] === ($searchSchema ?? 'public');
+                    }
+
+                    // Oracle: filter by connected user's schema (owner)
+                    if ($driver === 'oracle') {
+                        $owner = strtolower($connection->getConfig('username'));
+
+                        return strtolower($table['schema'] ?? '') === $owner;
                     }
 
                     // MySQL/MSSQL: filter by database name

@@ -35,7 +35,8 @@
         "spatie/laravel-medialibrary": "^11.21",
         "spatie/laravel-permission": "^7.2",
         "spatie/laravel-settings": "^3.7",
-        "yadahan/laravel-authentication-log": "^1.9"
+        "yadahan/laravel-authentication-log": "^1.9",
+        "yajra/laravel-oci8": "^12.11"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.0",

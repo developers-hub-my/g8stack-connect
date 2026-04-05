@@ -3,11 +3,12 @@
 use App\Enums\DataSourceType;
 
 it('has the correct values', function () {
-    expect(DataSourceType::cases())->toHaveCount(7)
+    expect(DataSourceType::cases())->toHaveCount(8)
         ->and(DataSourceType::POSTGRESQL->value)->toBe('postgresql')
         ->and(DataSourceType::MYSQL->value)->toBe('mysql')
         ->and(DataSourceType::MSSQL->value)->toBe('mssql')
         ->and(DataSourceType::SQLITE->value)->toBe('sqlite')
+        ->and(DataSourceType::ORACLE->value)->toBe('oracle')
         ->and(DataSourceType::CSV->value)->toBe('csv')
         ->and(DataSourceType::JSON->value)->toBe('json')
         ->and(DataSourceType::EXCEL->value)->toBe('excel');
@@ -32,7 +33,8 @@ it('identifies file-based sources', function () {
         ->and(DataSourceType::POSTGRESQL->isFile())->toBeFalse()
         ->and(DataSourceType::MYSQL->isFile())->toBeFalse()
         ->and(DataSourceType::MSSQL->isFile())->toBeFalse()
-        ->and(DataSourceType::SQLITE->isFile())->toBeFalse();
+        ->and(DataSourceType::SQLITE->isFile())->toBeFalse()
+        ->and(DataSourceType::ORACLE->isFile())->toBeFalse();
 });
 
 it('identifies database sources', function () {
@@ -40,6 +42,7 @@ it('identifies database sources', function () {
         ->and(DataSourceType::MYSQL->isDatabase())->toBeTrue()
         ->and(DataSourceType::MSSQL->isDatabase())->toBeTrue()
         ->and(DataSourceType::SQLITE->isDatabase())->toBeTrue()
+        ->and(DataSourceType::ORACLE->isDatabase())->toBeTrue()
         ->and(DataSourceType::CSV->isDatabase())->toBeFalse()
         ->and(DataSourceType::JSON->isDatabase())->toBeFalse()
         ->and(DataSourceType::EXCEL->isDatabase())->toBeFalse();
